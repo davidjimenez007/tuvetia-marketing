@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Salida de render de Remotion — se regenera con `npx remotion render`
+/remotion/out/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Entorno / secretos
+.env
+.env.*

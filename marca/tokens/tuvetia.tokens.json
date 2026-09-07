@@ -1,0 +1,44 @@
+{
+  "$meta": {
+    "marca": "Tuvetia",
+    "origen": "src/app/globals.css de la app · rediseño 2-sep-2026",
+    "nota": "Mismos valores que tuvetia.css. Para Remotion usa tuvetia.ts, que exporta esto tipado.",
+    "correccion": "2-sep-2026: display = Archivo. Bricolage Grotesque es marca vieja y está prohibida (manda el skill remotion-tuvetia)."
+  },
+  "primitivos": {
+    "white": "#ffffff", "snow": "#f5f8f7", "graphite": "#0c1613",
+    "mint": { "100": "#e6f2ee", "200": "#c2e2d8", "300": "#7ed0ba", "500": "#12856a", "600": "#0f6e58", "700": "#0b5847", "900": "#07332a" },
+    "red": { "100": "#fae9e7", "500": "#c03a2e", "600": "#a83226", "700": "#93291f" },
+    "amber": { "100": "#f8efdc", "700": "#8a5a0b" },
+    "whatsapp": "#25D366"
+  },
+  "claro": {
+    "ink": "#ffffff", "ink2": "#f5f8f7", "surface": "#ffffff", "surface2": "#f5f8f7", "panel": "#f5f8f7", "card": "#ffffff",
+    "border": "#e2e9e5", "borderSoft": "#edf2f0", "borderStrong": "#7a8a82",
+    "muted": "#5d706a", "text2": "#46534f", "text": "#0c1613",
+    "accent": "#12856a", "accentBright": "#0f6e58", "brandDeep": "#0b5847", "onBrand": "#ffffff", "accentText": "#0b5847", "accentSoft": "#e6f2ee",
+    "danger": "#c03a2e", "dangerSoft": "#fae9e7", "ok": "#12856a", "okSoft": "#e6f2ee", "warn": "#8a5a0b", "warnSoft": "#f8efdc", "info": "#3f6670",
+    "status": { "scheduled": "#6b6bbf", "confirmed": "#12856a", "inProgress": "#8a5a0b", "completed": "#2e7d8b", "canceled": "#8a9a93", "noShow": "#c03a2e" },
+    "chart": ["#12876a", "#aa5f00", "#6f68cf", "#a8425f", "#256fb4"],
+    "shadow": { "sm": "0 1px 2px rgba(12,22,19,.05)", "md": "0 4px 12px rgba(12,22,19,.08)", "popover": "0 4px 16px rgba(12,22,19,.12), 0 1px 2px rgba(12,22,19,.08)" }
+  },
+  "oscuro": {
+    "ink": "#0c1613", "ink2": "#0a1210", "surface": "#0c1613", "surface2": "#14211c", "panel": "#0c1613", "card": "#14211c",
+    "border": "#223129", "borderSoft": "#1a2620", "borderStrong": "#5c7066",
+    "muted": "#7b8d85", "text2": "#9dafa7", "text": "#f5f8f7",
+    "accent": "#7ed0ba", "accentBright": "#99dcc9", "brandDeep": "#99dcc9", "onBrand": "#0c1613", "accentText": "#7ed0ba", "accentSoft": "rgba(126,208,186,.12)",
+    "danger": "#d6584c", "dangerSoft": "rgba(214,88,76,.16)", "ok": "#7ed0ba", "okSoft": "rgba(126,208,186,.12)", "warn": "#e5c078", "warnSoft": "rgba(229,192,120,.14)", "info": "#7fb0bd",
+    "status": { "scheduled": "#a0a0e0", "confirmed": "#7ed0ba", "inProgress": "#e5c078", "completed": "#4fbfb2", "canceled": "#7b8d85", "noShow": "#d6584c" },
+    "chart": ["#2ba57e", "#bc8028", "#9184ea", "#d7688c", "#4a8cc7"],
+    "shadow": { "sm": "0 1px 2px rgba(0,0,0,.3)", "md": "0 4px 12px rgba(0,0,0,.4)", "popover": "0 4px 16px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.3)" }
+  },
+  "forma": { "radius": 10, "radiusSm": 6, "radiusMd": 8, "radiusLg": 10, "radiusXl": 12, "radius2xl": 16 },
+  "tipografia": {
+    "display": { "family": "Archivo", "pesos": [600, 700], "tracking": "-.015em (títulos) · -.022em (titular de página) · -.02em (wordmark)" },
+    "sans": { "family": "Inter Tight", "pesos": [400, 500, 600, 700], "cuerpo": "15px / 1.55" },
+    "mono": { "family": "JetBrains Mono", "pesos": [400, 500], "rotulo": "10px · 500 · mayúsculas · tracking .15em", "beta": "9px · 600 · mayúsculas · tracking .16em" },
+    "google": "https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+  },
+  "movimiento": { "ease": "cubic-bezier(.2,0,0,1)", "hover": "translateY(-1px) + borde hacia menta 45% + shadow md" },
+  "grano": { "filtro": "feTurbulence fractalNoise baseFrequency .9 numOctaves 2", "opacidad": 0.32, "mezcla": "multiply" }
+}

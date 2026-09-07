@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TUVETIA · tokens de marca (CSS)
+   Fuente: src/app/globals.css de la app (rediseño 2-sep-2026). Copiado tal cual,
+   sin inventar nada. Importa este archivo en cualquier pieza HTML (carruseles,
+   cierres de reel, landing, hoja de marca) y usa SIEMPRE las variables, nunca hex
+   sueltos: así cuando cambie la app cambia el contenido.
+
+   Reglas que no se ven en los números (ver marca/identidad.md):
+   · El blanco es fondo y centro. El menta se reserva para ACCIÓN y estado activo,
+     nunca para decorar superficies grandes.
+   · Menta 500 pinta RELLENOS con tinta blanca encima. Menta 700 es el menta que
+     va en TEXTO (4.58:1 contra 8.4:1 de contraste sobre blanco).
+   · El grafito (negro) sólo aparece cuando es Athos (notch, cockpit, pill).
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* ── Primitivos · nunca se reasignan ─────────────────────────────────────── */
+  --tv-white:#ffffff; --tv-snow:#f5f8f7; --tv-graphite:#0c1613;
+  --tv-mint-100:#e6f2ee; --tv-mint-200:#c2e2d8; --tv-mint-300:#7ed0ba;
+  --tv-mint-500:#12856a; --tv-mint-600:#0f6e58; --tv-mint-700:#0b5847; --tv-mint-900:#07332a;
+  --tv-red-100:#fae9e7; --tv-red-500:#c03a2e; --tv-red-600:#a83226; --tv-red-700:#93291f;
+  --tv-amber-100:#f8efdc; --tv-amber-700:#8a5a0b;
+  --tv-whatsapp:#25D366;                      /* verde oficial de WhatsApp: sólo para su logo y el CTA */
+
+  /* ── Superficie y tinta ──────────────────────────────────────────────────── */
+  --ink:var(--tv-white); --ink-2:var(--tv-snow);
+  --surface:var(--tv-white); --surface-2:var(--tv-snow);
+  --panel:var(--tv-snow); --card:var(--tv-white);
+  --border:#e2e9e5; --border-soft:#edf2f0; --border-strong:#7a8a82;
+  --muted:#5d706a; --text-2:#46534f; --text:var(--tv-graphite);
+
+  /* ── Acción ──────────────────────────────────────────────────────────────── */
+  --accent:var(--tv-mint-500); --accent-bright:var(--tv-mint-600); --brand-deep:var(--tv-mint-700);
+  --on-brand:var(--tv-white); --accent-text:var(--tv-mint-700); --accent-soft:var(--tv-mint-100);
+
+  /* ── Estados · los -soft son SÓLIDOS en claro ────────────────────────────── */
+  --danger:var(--tv-red-500); --danger-soft:var(--tv-red-100);
+  --ok:var(--tv-mint-500); --ok-soft:var(--tv-mint-100);
+  --warn:var(--tv-amber-700); --warn-soft:var(--tv-amber-100);
+  --info:#3f6670;
+
+  /* ── Estados de cita (bloques de la agenda) ──────────────────────────────── */
+  --status-scheduled:#6b6bbf; --status-confirmed:var(--tv-mint-500); --status-in-progress:var(--tv-amber-700);
+  --status-completed:#2e7d8b; --status-canceled:#8a9a93; --status-no-show:var(--tv-red-500);
+
+  /* ── Paleta categórica (validada en luminosidad, croma y daltonismo) ─────── */
+  --chart-1:#12876a; --chart-2:#aa5f00; --chart-3:#6f68cf; --chart-4:#a8425f; --chart-5:#256fb4;
+
+  /* ── Forma · escala apretada del rediseño (controles 8, cards 12) ─────────── */
+  --radius:10px; --radius-sm:6px; --radius-md:8px; --radius-lg:10px; --radius-xl:12px; --radius-2xl:16px;
+
+  /* ── Sombras · dos niveles suaves + la del popover ───────────────────────── */
+  --shadow-sm:0 1px 2px rgba(12,22,19,.05);
+  --shadow-md:0 4px 12px rgba(12,22,19,.08);
+  --shadow-popover:0 4px 16px rgba(12,22,19,.12), 0 1px 2px rgba(12,22,19,.08);
+
+  /* ── Tipografía ──────────────────────────────────────────────────────────── */
+  --sans:"Inter Tight","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,"Courier New",monospace;
+  --display:"Archivo",system-ui,sans-serif;
+  --texto-app:15px; --interlinea-app:1.55;
+  --ease:cubic-bezier(.2,0,0,1);
+}
+
+/* ── Superficie grafito · UN solo bloque para `.dark` (tema) y `.consulta` (Athos) ──
+   El acento sube a menta 300 porque el 500 no contrasta sobre grafito. */
+.dark, .consulta{
+  --ink:var(--tv-graphite); --ink-2:#0a1210;
+  --surface:var(--tv-graphite); --surface-2:#14211c;
+  --panel:var(--tv-graphite); --card:#14211c;
+  --border:#223129; --border-soft:#1a2620; --border-strong:#5c7066;
+  --muted:#7b8d85; --text-2:#9dafa7; --text:var(--tv-snow);
+  --accent:var(--tv-mint-300); --accent-bright:#99dcc9; --brand-deep:#99dcc9;
+  --on-brand:var(--tv-graphite); --accent-text:var(--tv-mint-300);
+  --accent-soft:rgba(126,208,186,.12);
+  --danger:#d6584c; --danger-soft:rgba(214,88,76,.16);   /* en oscuro los -soft SÍ son translúcidos */
+  --ok:var(--tv-mint-300); --ok-soft:rgba(126,208,186,.12);
+  --warn:#e5c078; --warn-soft:rgba(229,192,120,.14);
+  --info:#7fb0bd;
+  --status-scheduled:#a0a0e0; --status-confirmed:var(--tv-mint-300); --status-in-progress:#e5c078;
+  --status-completed:#4fbfb2; --status-canceled:#7b8d85; --status-no-show:#d6584c;
+  --chart-1:#2ba57e; --chart-2:#bc8028; --chart-3:#9184ea; --chart-4:#d7688c; --chart-5:#4a8cc7;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,.4);
+  --shadow-popover:0 4px 16px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.3);
+}
+.consulta{ color-scheme:dark; background:var(--surface); color:var(--text); }
+.dark{ color-scheme:dark; }
+
+/* ── Firmas tipográficas del sistema ─────────────────────────────────────────
+   Son las tres cosas que hacen que algo "se vea Tuvetia" antes de leer nada. */
+.tv-rotulo{  /* microrrótulo: mono 10px, mayúsculas, tracking bien abierto */
+  font-family:var(--mono); font-size:10px; font-weight:500;
+  text-transform:uppercase; letter-spacing:.15em; color:var(--muted);
+}
+.tv-display{ font-family:var(--display); font-weight:600; letter-spacing:-.015em; line-height:1.15; }
+.tv-titular{ font-family:var(--display); font-weight:600; letter-spacing:-.022em; line-height:1.12; text-wrap:balance; }
+.tv-wordmark{ font-family:var(--display); font-weight:700; letter-spacing:-.02em; }
+.tv-beta{ font-family:var(--mono); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
+.tv-num{ font-variant-numeric:tabular-nums; }
+
+/* ── El grano de papel ───────────────────────────────────────────────────────
+   Vive sobre el fondo expuesto; toda superficie opaca (card, barra) lo tapa.
+   Sobre grafito el multiply casi no pinta, y está bien. */
+.tv-grano{ position:relative; isolation:isolate; }
+.tv-grano::before{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+  opacity:.32; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.tv-grano > *{ position:relative; z-index:1; }
+
+/* ── Botón y pill del sistema (por si una pieza los necesita tal cual) ──────── */
+.tv-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em;
+  height:2.4em; padding:0 .95em; border-radius:var(--radius-md); border:1px solid transparent;
+  background:var(--accent); color:var(--on-brand); font-family:var(--sans); font-weight:500;
+  box-shadow:var(--shadow-sm); white-space:nowrap; text-decoration:none;
+}
+.tv-btn.borde{ background:var(--surface); border-color:var(--border); color:var(--text); }
+.tv-pill{
+  display:inline-flex; align-items:center; gap:.4em; padding:.28em .75em; border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--accent) 25%,transparent); background:var(--accent-soft);
+  color:var(--accent-text); font-family:var(--sans); font-weight:600; letter-spacing:.04em;
+}
