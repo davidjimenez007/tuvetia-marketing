@@ -8,6 +8,7 @@ import { AbsoluteFill, interpolate, Sequence, useCurrentFrame } from "remotion";
 import { FUENTE } from "../marca/fuentes";
 import { TRACKING, TV } from "../marca/tokens";
 import { easeTuvetia } from "../motor/animar";
+import { Grano } from "../motor/Grano";
 import { AppEmbebida } from "./AppEmbebida";
 import { escalaCamaraEn } from "./Camara";
 import { Cierre } from "./Cierre";
@@ -15,27 +16,6 @@ import { CORTES_RAFAGA, DURACION, FIN_VENTANA, INTERLUDIOS, INTRO, VENTANA } fro
 import { Interludio } from "./Interludio";
 import { Sonido } from "./Sonido";
 import { BandaTextos } from "./Texto";
-
-/* Grano de papel: feTurbulence estático (no cambia por frame), multiplicado encima. */
-const Grano: React.FC = () => (
-  <svg
-    width="1920"
-    height="1080"
-    style={{
-      position: "absolute",
-      inset: 0,
-      opacity: 0.18,
-      mixBlendMode: "multiply",
-      pointerEvents: "none",
-    }}
-    aria-hidden="true"
-  >
-    <filter id="grano-papel">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" />
-    </filter>
-    <rect width="100%" height="100%" filter="url(#grano-papel)" />
-  </svg>
-);
 
 
 const Ventana: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -213,7 +193,7 @@ export const DemoSaaS: React.FC = () => {
       </Sequence>
 
       {/* El grano va encima de todo el lienzo, estático. */}
-      <Grano />
+      <Grano ancho={1920} alto={1080} />
 
       {/* Música + el tecleo de los interludios (único SFX desde la pasada 5). */}
       <Sonido />

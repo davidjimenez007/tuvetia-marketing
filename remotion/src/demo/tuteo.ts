@@ -77,6 +77,11 @@ export const MAPA_TUTEO: ReadonlyArray<readonly [RegExp, string]> = [
   [/querés/g, "quieres"],
   [/tenés/g, "tienes"],
   [/hacés/g, "haces"],
+  /* ExplainerRAG: pantallas del asistente y de la consulta a 540×960 y 1440×900. */
+  [/Resumí(?![a-záéíóúñ])/g, "Resume"],
+  [/revisala y aprobala/g, "revísala y apruébala"],
+  [/Confirmanos/g, "Confírmanos"],
+  [/avisanos/g, "avísanos"],
 ];
 
 function tutear(texto: string): string {

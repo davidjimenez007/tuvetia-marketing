@@ -4,7 +4,7 @@ Este repo produce TODO el contenido de Tuvetia: reels, carruseles, posts de Link
 
 ## Qué es Tuvetia
 
-Software clínico para veterinarios en Colombia/LatAm. VetGPT es su inteligencia: escucha la consulta, escribe la ficha, el vet revisa y firma. También responde el WhatsApp de los dueños (siempre con aprobación del vet) y piensa los casos con el vet citando literatura real (61.540 papers).
+Software clínico para veterinarios en Colombia/LatAm. VetGPT es su inteligencia: escucha la consulta, escribe la ficha, el vet revisa y firma. También responde el WhatsApp de los dueños (siempre con aprobación del vet) y piensa los casos con el vet citando literatura real (120.000 fuentes veterinarias).
 
 **Estado real: cero clínicas lo usan todavía. Buscamos los primeros 10 veterinarios.** Esto no se esconde — es el gancho. Construimos en público.
 

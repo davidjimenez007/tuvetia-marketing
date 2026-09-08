@@ -19,7 +19,15 @@ const LogoWhatsApp: React.FC<{ tam: number }> = ({ tam }) => (
   </svg>
 );
 
-export const Cierre: React.FC = () => (
+/** Tamaños en px del lienzo. Los valores por defecto son los del demo 16:9; el reel 9:16
+ *  pasa los suyos (logo 620, claim 72, cta 34, micro 22). */
+export const Cierre: React.FC<{
+  logo?: number;
+  claim?: number;
+  cta?: number;
+  micro?: number;
+  gap?: number;
+}> = ({ logo = 520, claim = 64, cta = 30, micro = 14, gap = 48 }) => (
   <div
     style={{
       position: "absolute",
@@ -28,18 +36,18 @@ export const Cierre: React.FC = () => (
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      gap: 48,
+      gap,
     }}
   >
     <Entra i={0} gap={8} y={26} d={26}>
-      <Img src={staticFile("marca/logo-horizontal.svg")} style={{ width: 520, display: "block" }} />
+      <Img src={staticFile("marca/logo-horizontal.svg")} style={{ width: logo, display: "block" }} />
     </Entra>
     <Entra i={1} gap={8} y={26} d={26}>
       <div
         style={{
           fontFamily: FUENTE.display,
           fontWeight: 700,
-          fontSize: 64,
+          fontSize: claim,
           lineHeight: 1.12,
           letterSpacing: `${TRACKING.titular}em`,
           color: TV.text,
@@ -61,12 +69,12 @@ export const Cierre: React.FC = () => (
           color: "#ffffff",
           fontFamily: FUENTE.sans,
           fontWeight: 600,
-          fontSize: 30,
+          fontSize: cta,
           borderRadius: 999,
-          padding: "20px 36px",
+          padding: `${Math.round(cta * 0.67)}px ${Math.round(cta * 1.2)}px`,
         }}
       >
-        <LogoWhatsApp tam={34} />
+        <LogoWhatsApp tam={Math.round(cta * 1.13)} />
         Escríbenos al WhatsApp
       </div>
     </Entra>
@@ -74,7 +82,7 @@ export const Cierre: React.FC = () => (
       <div
         style={{
           fontFamily: FUENTE.mono,
-          fontSize: 14,
+          fontSize: micro,
           fontWeight: 500,
           textTransform: "uppercase",
           letterSpacing: `${TRACKING.beta}em`,

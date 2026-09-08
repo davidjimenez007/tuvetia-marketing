@@ -8,7 +8,7 @@ import React from "react";
 import { easeTuvetia } from "../motor/animar";
 import { TV } from "../marca/tokens";
 import { APP_H, APP_W, CLICS, CURSOR_TRAMOS } from "./guion";
-import type { Blanco } from "./guion";
+import type { Blanco, Clic, TramoCursor } from "./guion";
 
 export interface EstadoCursor {
   visible: boolean;
@@ -23,6 +23,14 @@ interface PuntoPx {
   y: number;
 }
 
+/** Tamaño del viewport de la app (px de app): resuelve los puntos relativos. */
+export interface DimsApp {
+  w: number;
+  h: number;
+}
+
+const DIMS_DEMO: DimsApp = { w: APP_W, h: APP_H };
+
 function buscarElemento(doc: Document, sel: string, texto?: string): Element | null {
   if (!texto) return doc.querySelector(sel);
   const candidatos = Array.from(doc.querySelectorAll(sel));
@@ -36,6 +44,7 @@ export function resolverBlanco(
   blanco: Blanco,
   estricto: boolean,
   toma: string,
+  dims: DimsApp = DIMS_DEMO,
 ): PuntoPx {
   if (blanco.sel) {
     const el = buscarElemento(doc, blanco.sel, blanco.texto);
@@ -44,14 +53,14 @@ export function resolverBlanco(
       return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
     if (typeof blanco.x === "number" && typeof blanco.y === "number") {
-      return { x: blanco.x * APP_W, y: blanco.y * APP_H };
+      return { x: blanco.x * dims.w, y: blanco.y * dims.h };
     }
     if (estricto) {
       throw new Error(`Cursor · toma "${toma}": el selector no resuelve: ${blanco.sel}`);
     }
-    return { x: APP_W / 2, y: APP_H / 2 };
+    return { x: dims.w / 2, y: dims.h / 2 };
   }
-  return { x: (blanco.x ?? 0.5) * APP_W, y: (blanco.y ?? 0.5) * APP_H };
+  return { x: (blanco.x ?? 0.5) * dims.w, y: (blanco.y ?? 0.5) * dims.h };
 }
 
 /** Trayectoria recta con arco leve: bezier cuadrática con control desplazado 6 % de la
@@ -69,14 +78,26 @@ function puntoDeViaje(a: PuntoPx, b: PuntoPx, t: number): PuntoPx {
   };
 }
 
+/** Tablas del cursor: las del demo por defecto, o las de otra pieza. */
+export interface GuionCursor {
+  tramos: readonly TramoCursor[];
+  clics: readonly Clic[];
+  dims: DimsApp;
+}
+
 export function estadoCursorEn(frame: number, doc: Document): EstadoCursor {
+  return estadoCursorDe(frame, doc, { tramos: CURSOR_TRAMOS, clics: CLICS, dims: DIMS_DEMO });
+}
+
+export function estadoCursorDe(frame: number, doc: Document, guion: GuionCursor): EstadoCursor {
+  const { tramos, clics, dims } = guion;
   let visible = false;
   let objetivo: Blanco | null = null;
   let objetivoToma = "";
   let viajeActivo: { desde: Blanco | null; hasta: Blanco; f0: number; f1: number; toma: string } | null =
     null;
 
-  for (const tramo of CURSOR_TRAMOS) {
+  for (const tramo of tramos) {
     if (tramo.tipo === "aparece" && frame >= tramo.f) {
       visible = true;
       objetivo = tramo.en;
@@ -105,22 +126,22 @@ export function estadoCursorEn(frame: number, doc: Document): EstadoCursor {
     }
   }
 
-  let pos: PuntoPx = { x: APP_W / 2, y: APP_H / 2 };
+  let pos: PuntoPx = { x: dims.w / 2, y: dims.h / 2 };
   if (viajeActivo) {
     const a = viajeActivo.desde
-      ? resolverBlanco(doc, viajeActivo.desde, true, `${viajeActivo.toma} (desde)`)
+      ? resolverBlanco(doc, viajeActivo.desde, true, `${viajeActivo.toma} (desde)`, dims)
       : pos;
-    const b = resolverBlanco(doc, viajeActivo.hasta, true, viajeActivo.toma);
+    const b = resolverBlanco(doc, viajeActivo.hasta, true, viajeActivo.toma, dims);
     const t = easeTuvetia((frame - viajeActivo.f0) / (viajeActivo.f1 - viajeActivo.f0));
     pos = puntoDeViaje(a, b, t);
   } else if (objetivo) {
-    pos = resolverBlanco(doc, objetivo, true, objetivoToma);
+    pos = resolverBlanco(doc, objetivo, true, objetivoToma, dims);
   }
 
   /* Clic: presión 3 frames antes, vuelta en 4; anillo de 14 frames desde el clic. */
   let escala = 1;
   let anillo: EstadoCursor["anillo"] = null;
-  for (const clic of CLICS) {
+  for (const clic of clics) {
     if (frame >= clic.f - 3 && frame < clic.f) {
       escala = 1 - 0.14 * easeTuvetia((frame - (clic.f - 3)) / 3);
     } else if (frame >= clic.f && frame < clic.f + 4) {

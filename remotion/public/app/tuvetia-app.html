@@ -3964,6 +3964,10 @@
       }
     }
 
+    /* Repreguntas de VetGPT: opciones dentro del mensaje; la elegida queda en menta. */
+    .repreguntas { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+    .sug.elegida { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 500; }
+
     /* ═══ PARCHE DEMO (Remotion) ═════════════════════════════════════════════════════════════
    Captura determinista: sin transiciones, sin animaciones CSS, sin cursor nativo, sin
    scrollbars. Lo vivo (pulso, eq, spinner, toasts, hover que levanta) lo reproduce
@@ -7092,6 +7096,8 @@
     function marcarTexto(t, citas) {
       let s = esc(String(t || ""));
       s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      /* PARCHE DEMO (ExplainerRAG): *itálica* → <em>, después de negritas y antes de citas. */
+      s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
       s = s.replace(/\[(\d+)\]/g, (_, n) => {
         const c = (citas || []).find(x => x.n === Number(n));
         return c && c.url
@@ -7939,6 +7945,13 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       <span class="quien">VetGPT</span>
       ${m.herramienta ? html`<div class="fila xs faint" style="gap:6px;padding:2px 0">${icon("cargando", "girando", 13)} Consultando ${m.herramienta}…</div>` : ""}
       ${m.texto ? html`<div class="bloques">${bloquesRicos(m.texto, m.citas)}${m.escribiendo ? html`<span class="cursor"></span>` : ""}</div>` : ""}
+      ${m.repregunta ? html`<div class="repreguntas">${m.repregunta.campos.map(c => html`
+        <div>
+          <span class="rotulo" style="display:block;margin-bottom:6px">${c.rotulo}</span>
+          <div class="filaw" style="gap:6px">${c.opciones.map(o => html`
+            <button class="sug ${m.elegidas && m.elegidas[c.id] === o ? "elegida" : ""}"
+                    data-act="repregunta" data-arg="${c.id}:${o}">${o}</button>`)}</div>
+        </div>`)}</div>` : ""}
       ${m.accion ? TarjetaAccion(m.accion) : ""}
       ${m.opciones ? html`<div class="filaw" style="gap:6px;margin-top:4px">${m.opciones.map(o => html`<button class="sug" data-act="chat-sug" data-arg="${o}">${o}</button>`)}</div>` : ""}
     </div>
@@ -8103,6 +8116,18 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       }))}
   </div>`;
     }
+
+    /* Repreguntas: cuando la pregunta admite varias lecturas clínicas, VetGPT pregunta antes de
+       responder en vez de asumir. El vet elige y la respuesta se afina sobre lo elegido. */
+    const REPREGUNTAS = {
+      malassezia: {
+        texto: "Antes de responder, dos cosas que cambian la recomendación:",
+        campos: [
+          { id: "especie",     rotulo: "¿Especie?",                        opciones: ["Perro", "Gato"] },
+          { id: "recurrencia", rotulo: "¿Primer episodio o recurrente?",   opciones: ["Primer episodio", "Recurrente"] }
+        ]
+      }
+    };
 
     /* ── El motor de respuestas ─────────────────────────────────────────────────────────────────
        No hay modelo detrás: hay un conjunto de intenciones que cubren lo que la demo necesita
@@ -10295,6 +10320,15 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       "chat-input": (a, e, el) => { CHAT.entrada = val(el); },
       "chat-enviar": (a, e, el) => { e.preventDefault(); const q = datosForm(el).q; if (!q?.trim()) return; el.querySelector("textarea").value = ""; enviarChat(q); },
       "chat-sug": a => enviarChat(a),
+      "repregunta": a => {
+        const corte = a.indexOf(":");
+        const id = a.slice(0, corte), op = a.slice(corte + 1);
+        const m = CHAT.mensajes[CHAT.mensajes.length - 1];
+        if (!m || !m.repregunta) return;
+        if (!m.elegidas) m.elegidas = {};
+        m.elegidas[id] = op;
+        repintarChat(false);
+      },
       adjuntar: () => { CHAT.adjuntos.push("historia-clinica.pdf"); toast("historia-clinica.pdf listo para enviar"); repintarChat(false); },
       "quitar-adjunto": a => { CHAT.adjuntos = CHAT.adjuntos.filter(x => x !== a); repintarChat(false); },
       dictar: () => toast("Dictado por micrófono", { detalle: "En la app real transcribe mientras hablás; acá está simulado." }),
@@ -11020,6 +11054,8 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       GUION_POR_DEFECTO,
       iniciarGrabacion, terminarGrabacion, enviarChat, generarNotaSOAP, abrirPastilla, abrirPersonalizar,
       getP, getO, getU, getItem, getC, getF, nomP, nomO, nomU, fmtCOP, totalDeFactura, saldoDeFactura,
+      /* PARCHE DEMO (ExplainerRAG): el replay arma las respuestas del chat con estos dos. */
+      responderVetGPT, repintarChat, REPREGUNTAS,
 
       /* Recorre todas las rutas y avisa si alguna se rompe. Además busca artefactos: un
          «[object Object]» o un «undefined» impreso no lanza excepción, así que sin este chequeo

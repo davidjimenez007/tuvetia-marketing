@@ -275,8 +275,9 @@ const PASOS: Paso[] = [
 ];
 
 /** Devuelve UI/VIVO/CARRITO/CAL/COM/FL/ACC/CHAT/overlays al estado de arranque de la app.
- *  seedDemo() reasigna DB, pero estos singletons viven fuera y hay que resetearlos a mano. */
-function resetEstado(win: VentanaApp): void {
+ *  seedDemo() reasigna DB, pero estos singletons viven fuera y hay que resetearlos a mano.
+ *  Exportada: el replay de ExplainerRAG hace el mismo reset sobre sus dos iframes. */
+export function resetEstado(win: VentanaApp): void {
   const app = win.app;
   app.cerrarTodo();
   app.resetWZ();
