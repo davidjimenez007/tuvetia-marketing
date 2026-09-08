@@ -8,7 +8,7 @@ Sacada del sistema real de la app (rediseño del 2-sep-2026, `tuvetia-app-redise
 |---|---|---|---|
 | Fondo y centro | `--tv-white` | `#ffffff` | Todo empieza en blanco. Es la superficie por defecto. |
 | Nieve | `--tv-snow` | `#f5f8f7` | Paneles, barra lateral, superficies un paso atrás. |
-| Grafito | `--tv-graphite` | `#0c1613` | Texto principal en claro. Fondo **sólo cuando es Athos** (notch, cockpit) o en tema oscuro. |
+| Grafito | `--tv-graphite` | `#0c1613` | Texto principal en claro. Fondo **sólo cuando es VetGPT** (notch, cockpit) o en tema oscuro. |
 | Menta 500 | `--tv-mint-500` | `#12856a` | **Acción.** Botones, glifo del logo, estado activo. Siempre con blanco encima. |
 | Menta 700 | `--tv-mint-700` | `#0b5847` | El menta que va **en texto** sobre blanco (8.4:1 de contraste; el 500 da 4.58:1). |
 | Menta 300 | `--tv-mint-300` | `#7ed0ba` | El acento sobre grafito. En oscuro, el logo y los botones usan éste. |
@@ -17,7 +17,7 @@ Sacada del sistema real de la app (rediseño del 2-sep-2026, `tuvetia-app-redise
 | Ámbar 700 | `--tv-amber-700` | `#8a5a0b` | Advertencia. |
 | WhatsApp | `--tv-whatsapp` | `#25D366` | Sólo para el logo de WhatsApp. No es un color de marca. |
 
-Regla madre: **el blanco es el fondo, el menta es la acción, el grafito es Athos.** El menta nunca decora superficies grandes; aparece donde hay algo que hacer. El único bloque menta grande que existe es el CTA a WhatsApp, porque el CTA *es* la acción.
+Regla madre: **el blanco es el fondo, el menta es la acción, el grafito es VetGPT.** El menta nunca decora superficies grandes; aparece donde hay algo que hacer. El único bloque menta grande que existe es el CTA a WhatsApp, porque el CTA *es* la acción.
 
 Los tokens completos (claro y oscuro, estados, gráficas, radios, sombras) están en `tokens/tuvetia.css`, `tokens/tuvetia.tokens.json` y `tokens/tuvetia.ts` (para Remotion).
 
@@ -68,6 +68,6 @@ Los JPG salen de páginas HTML que usan `tokens/tuvetia.css` y las fuentes de Go
 
 - Coral `#f0764e` y cualquier color de la marca vieja. No existen.
 - Menta como fondo decorativo de slides enteros. Sólo el bloque CTA.
-- Negro que no sea Athos.
+- Negro que no sea VetGPT.
 - Sombras duras, degradados, brillos. Las dos sombras del sistema son `sm` y `md`, y son suaves.
 - Logos de terceros en color de marca: Google, Microsoft y WhatsApp van con sus colores oficiales, siempre sobre fondo claro.

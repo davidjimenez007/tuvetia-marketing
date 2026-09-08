@@ -2,7 +2,7 @@
 
 Esto no es estilo. Cada línea existe por una razón de producto, legal o de estrategia. `/revisar` revienta si una pieza pisa cualquiera.
 
-1. **Athos nunca diagnostica, nunca firma.** Athos escucha, escribe, sugiere, cita. El vet decide y firma. Prohibido: "Dx preliminar", "Athos diagnostica", "deja que la IA decida". Permitido: "Athos lo piensa contigo", "tú firmas".
+1. **VetGPT nunca diagnostica, nunca firma.** VetGPT escucha, escribe, sugiere, cita. El vet decide y firma. Prohibido: "Dx preliminar", "VetGPT diagnostica", "deja que la IA decida". Permitido: "VetGPT lo piensa contigo", "tú firmas".
 2. **Cero métricas, testimonios o clínicas inventadas.** No existen clínicas usando Tuvetia todavía. No hay "25% más rentabilidad" ni "+2h al día" medidas. La honestidad de cero tracción ES el contenido, no algo que tapar.
 3. **Nunca atacar la facturación.** Tuvetia hará facturación en el futuro. Nada de "los otros solo facturan".
 4. **Nunca nombrar competidores.** El enemigo es el statu quo (papeleo, software viejo, tiempo perdido), no VetSoft ni nadie con nombre.

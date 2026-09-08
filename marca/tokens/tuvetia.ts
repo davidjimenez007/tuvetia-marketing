@@ -8,7 +8,7 @@
  *
  * Reglas (ver marca/sistema-visual.md): el menta es ACCIÓN, no decoración; TV.accent pinta
  * rellenos con TV.onBrand encima; TV.accentText es el menta que va en texto; el grafito
- * (TV_DARK) sólo cuando es Athos.
+ * (TV_DARK) sólo cuando es VetGPT.
  */
 export const PRIMITIVOS = {
   white: "#ffffff", snow: "#f5f8f7", graphite: "#0c1613",
@@ -28,7 +28,7 @@ export const TV = {
   shadowSm: "0 1px 2px rgba(12,22,19,.05)", shadowMd: "0 4px 12px rgba(12,22,19,.08)", shadowPopover: "0 4px 16px rgba(12,22,19,.12), 0 1px 2px rgba(12,22,19,.08)",
 } as const;
 
-/** Superficie grafito: el tema oscuro de la app y el contexto `.consulta` de Athos (notch, cockpit). */
+/** Superficie grafito: el tema oscuro de la app y el contexto `.consulta` de VetGPT (notch, cockpit). */
 export const TV_DARK = {
   ink: PRIMITIVOS.graphite, ink2: "#0a1210", surface: PRIMITIVOS.graphite, surface2: "#14211c", panel: PRIMITIVOS.graphite, card: "#14211c",
   border: "#223129", borderSoft: "#1a2620", borderStrong: "#5c7066",

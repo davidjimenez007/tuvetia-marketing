@@ -15,7 +15,7 @@ description: Convenciones de video-as-code para composiciones Remotion de Tuveti
 
 - Regla madre (Fase 4): **el producto es lo único con color y movimiento.** Fondo sobrio, tipografía grande, y la pantalla del producto es la protagonista cromática.
 - Prohibido: coral #f0764e (marca vieja).
-- El negro se reserva para los objetos de Athos (notch/pill/barra) — el negro solo aparece cuando es Athos.
+- El negro se reserva para los objetos de VetGPT (notch/pill/barra) — el negro solo aparece cuando es VetGPT.
 
 ## Motor de movimiento
 
