@@ -51,9 +51,14 @@ el puntero), f0600 (toast «7 creados, 1 actualizado» sobre Existencias, KPIs c
 Primera pasada descartada por: zoom 1.3 recortaba la tabla, clic y corte en el mismo frame pintaban el
 anillo sobre la pantalla nueva, toast fuera del encuadre de lectura, rótulo largo pisando el microrrótulo.
 
-**Falta.** Ver el resto del lote (f0060, f0200, f0330, f0560, f0700, f1320) y `despues2-f760` del explainer
-tras el `microTop` de `Banda`; determinismo (f0470 en dos procesos, `out/qa/ventas/determinismo.sh`);
-render 2× + bajada + copia web (`out/render-ventas.sh`); completar §4 con la tabla final; commit de entrega.
+**Tercera pasada (22:00):** f0200 y f0330 con el push bajado a 1.05 (título y card enteros), y
+**determinismo**: f0470 renderizado en dos procesos distintos → `4fb6ca69084a2f54fb89f817c4648405` los dos.
+Los 13 stills del §4 pasan.
+
+**Entrega (22:18):** `out/render-ventas.sh` → `out/demo-ventas-2x.mp4` (2160×3840, yuvj420p, 47,0 MB;
+render 2× de 1500 frames en ~10 min), `out/demo-ventas.mp4` (1080×1920, 15,3 MB) y `out/demo-ventas-web.mp4`
+(1080×1920, yuv420p tv bt709 + faststart, 13,3 MB), los tres de 50,05 s con AAC. `out/` está en `.gitignore`.
+No queda nada pendiente de esta entrega; lo que sigue está en §6.
 
 ---
 
@@ -89,7 +94,7 @@ Los parches demo de la copia (reloj, semilla, `SIM`, `nav`, CSS de captura) no s
 | # | Dice el encargo / la plantilla | Se hizo | Por qué |
 |---|---|---|---|
 | 1 | §4: «1440 frames (48 s)» en la cabecera | **1500 frames** | La tabla de actos y el §8 suman 1500; la cabecera es un error de suma. |
-| 2 | §4 acto 3 / §5: corregir el `<select>` y «clic en confirmar»; beat 520 `confirmarImportacion()` | Tres clics: el `<select>` (f435), «Revisar 8 filas» (f480, paso 3 con la previsualización) e «Importar 8 ítems» (f555) | El flujo real tiene un paso «Revisar» entre el mapeo y la importación (`NOTAS-MAQUETA.md` §B). Es lo que el vet hace de verdad y muestra el «Actualiza» del Oclacitinib. |
+| 2 | §4 acto 3 / §5: corregir el `<select>` y «clic en confirmar»; beat 520 `confirmarImportacion()` | Tres clics: el `<select>` (f450), «Revisar 8 filas» (f495 → paso 3 en f510, con la previsualización) e «Importar 8 ítems» (f555 → importa en f570). Cada clic va un beat antes del corte que cambia la pantalla (`CLIC`/`CORTE` en `guion.ts`): así el anillo del clic se ve sobre el botón y no sobre la pantalla nueva | El flujo real tiene un paso «Revisar» entre el mapeo y la importación (`NOTAS-MAQUETA.md` §B). Es lo que el vet hace de verdad y muestra el «Actualiza» del Oclacitinib. El toast de importación se ve de f570 a f645 (sobre Existencias, adonde la app navega sola); el still del toast pasa a ser f0600. |
 | 3 | §3.2: el CSV de encabezados raros «tal cual» | Fixture ajustado (ver §1) | Sin columna suelta no hay acto 3; la salina se colaba en la factura. |
 | 4 | §3: «`facturar-recetado` lo mete al carrito» | Entra también la Solución ótica clotrimazol (`it-14`). Se filma tal cual; el plan queda legible en cámara (acto 5) para que las tres líneas sean verificables | **Deuda de producto, sin arreglar acá:** el emparejador toma la primera palabra del nombre del ítem y la busca en el plan; acierta con «oclacitinib» y con «solución» (por «solución de ácido acético», no por «clotrimazol»). Falsos positivos garantizados con cualquier «solución», «vacuna» o «alimento». Emparejar por la palabra más larga y distintiva del nombre («clotrimazol», «oclacitinib») sería robusto. |
 | 5 | §5 beat 990: `emitir-factura` | Se usa tal cual: `crearFactura("EMITIDA")` numera, descuenta stock y navega a la factura | Existe; no se encadena con `emitir-borrador` (descontaría dos veces). |
@@ -123,9 +128,38 @@ los ocho actos, en tuteo, sin afirmar nada que no esté en pantalla:
 
 ---
 
-## 4. QA — los 12 stills del encargo, en `out/qa/ventas/`
+## 4. QA — los stills del encargo (más f0600), en `out/qa/ventas/`
 
-(pendiente: se llena con la pasada de stills)
+Tres pasadas. La primera (zoom 1.3, clic y corte en el mismo frame) reventó cuatro cosas, anotadas en
+«Estado»; la segunda pasó todo menos la «I» de «Importar catálogo» recortada por el push 1.1 (f0200,
+f0330), que la tercera baja a 1.05. Mismo comando por frame:
+`npx remotion still DemoVentas out/qa/ventas/f####.png --frame=#### --timeout=90000`.
+
+| Still | Qué se ve | Estado |
+|---|---|---|
+| f0060 | Ventana completa con cromo en la pantalla de importar (zona de arrastre vacía); banda «EL CATÁLOGO · Tu catálogo ya existe. Está en una planilla.» (8 palabras); microrrótulo bajo la banda. | ✓ |
+| f0200 | Paso 2 con el nombre y el peso **reales** del archivo («catalogo-prueba-encabezados-raros.csv · 4 columnas · 8 filas · 342 B»), tres columnas mapeadas y «Punto de pedido» en «No importar». | ✓ (3.ª pasada: título entero) |
+| f0330 | El mapeo legible, tabla entera: Producto → Nombre, Valor → Precio, Cantidad → Existencias, Punto de pedido → No importar. | ✓ (3.ª pasada) |
+| f0470 | El puntero sobre el `<select>` de la cuarta columna, ya en **Mínimo**; «Revisar 8 filas» debajo. | ✓ |
+| f0560 | Paso 3: seis filas con Nuevo/**Actualiza** (Oclacitinib), «Se importarán 8 filas: 7 se crean y 1 ya existe…», el puntero clicando «Importar 8 ítems» con el anillo. | ✓ |
+| f0600 | Toast «Importados: 7 creados, 1 actualizado · 7 movimiento(s) de existencias registrados» sobre Existencias; KPIs «Bajo mínimo 2 · Agotados 1 · Por vencer 0». (El encargo lo pedía en f0560: el corte va 15 frames después del clic, desviación 2.) | ✓ |
+| f0700 | Existencias desplazada a la fila «Vacuna antirrábica · **0** · Agotado» en rojo; el Oclacitinib todavía en 4; las filas importadas al final. | ✓ |
+| f0900 | La consulta de Luna en la columna de 640: el **plan entero legible** (clotrimazol tópico ótico, oclacitinib 16 mg…), la alerta de alergias, la fila de botones con «Facturar lo recetado» y el puntero en camino. Tuteo: «Evita el fármaco implicado». | ✓ |
+| f0960 | El carrito ya armado: Cliente Mariana Osorio, Paciente Luna, «Consulta general 1 × $75.000», «Oclacitinib 16 mg x 20 tabl. 1 × $268.000» (la solución ótica, debajo del corte). | ✓ |
+| f1040 | Toast «FV-1154 emitida por $496.230 · Ya se ve en el tablero, en la dona de ventas y en la cartera» sobre la factura emitida; rótulo `EMITIR` solo. | ✓ |
+| f1180 | Existencias, zoom 1.4 en la fila «Oclacitinib 16 mg x 20 tabl. · MED-102 · Medicamento · **3** · 5»; la antirrábica en 0 debajo. El 4 → 3 ocurre por el corte del acto 7, no por animación. | ✓ |
+| f1320 | Movimientos: «Solución ótica clotrimazol · Venta · −1 · Factura FV-1154» y «Oclacitinib 16 mg x 20 tabl. · Venta · −1 · Factura FV-1154» (mismo número que el toast de f1040), luego las siete «Carga inicial» de la importación. | ✓ |
+| f1440 | Cierre: logo 620, claim en dos líneas, pastilla «Escríbenos al WhatsApp», `BUSCAMOS 10 VETERINARIOS · 0/10`. | ✓ |
+
+Checklist común (plantilla §7): nada legible fuera de la zona segura (banda 1330–1610, microrrótulo 1622–1662,
+ventana 250–1320) · lo que se pide leer se lee (cuerpo 19–24 px, números 26 px) · cero voseo en los
+stills · sin asteriscos crudos (no hay bloques ricos en la pieza) · `DEMO · DATOS DE EJEMPLO` en todos los
+actos · ningún número fuera del seed o del flujo · grafías `Tuvetia`/`VetGPT` · Archivo + JetBrains Mono
+· dock oculto · **determinismo:** ver «Estado» (f0470 en dos procesos).
+
+Propias del encargo: f0200/f0330 salen del CSV de `_pruebas/` (`TEXTO_CSV` idéntico al archivo, verificado
+por script) · f0600 coincide con las filas del fixture (7 + 1) · f1180 muestra 3 y en ese acto nunca
+se vio 4 · f1320 lleva el mismo número de factura que f1040 · ningún competidor ni logo ajeno en cuadro.
 
 ---
 

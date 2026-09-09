@@ -237,18 +237,20 @@ export const CAMARA_GENERAL: KeyframeCamara[] = [
   { f: ACTOS.mapeo, s: 1.04, foco: PT.centro },
 ];
 
-/* La tabla de mapeo mide 776 px de los 860 del encuadre: a 1.1 cabe entera (782 visibles) y el
-   cuerpo pasa de 18,8 a 20,7 px; a 1.3 (lo que pedía el encargo) se recortaban las dos columnas
-   (still f0330 de la primera pasada). Lo mismo para la fila que se corrige. */
+/* La tabla de mapeo mide 776 px de los 860 del encuadre y la card empieza en x 264: a 1.3 (lo que
+   pedía el encargo) se recortaban las dos columnas (still f0330 de la primera pasada); a 1.1 la tabla
+   cabía justa pero se comía la «I» de «Importar catálogo» (f0200 y f0330 de la segunda). A 1.05 el
+   recorte es de 21 px por lado (x 265→1083): la card y el título quedan enteros y el cuerpo sube de
+   18,8 a 19,7 px. Es un push lento, como el de los actos 1 y 4. Lo mismo para la fila que se corrige. */
 export const CAMARA_COLUMNA_A: KeyframeCamara[] = [
   { f: ACTOS.mapeo, s: 1, foco: PT.centro },
   { f: 180, s: 1, foco: FILA_MAPEO_2 },
-  { f: 240, s: 1.1, foco: FILA_MAPEO_2 },
-  { f: 390, s: 1.1, foco: FILA_MAPEO_2 },
+  { f: 240, s: 1.05, foco: FILA_MAPEO_2 },
+  { f: 390, s: 1.05, foco: FILA_MAPEO_2 },
   { f: ACTOS.confirmar, s: 1, foco: PT.centro },
   { f: 430, s: 1, foco: FILA_ULTIMA },
-  { f: CLIC.select, s: 1.1, foco: FILA_ULTIMA },
-  { f: 490, s: 1.1, foco: FILA_ULTIMA },
+  { f: CLIC.select, s: 1.05, foco: FILA_ULTIMA },
+  { f: 490, s: 1.05, foco: FILA_ULTIMA },
   { f: CLIC.revisar, s: 1, foco: PT.centro },
   { f: CORTE.importa - 1, s: 1, foco: PT.centro },
   { f: CORTE.importa, s: 1, foco: TOAST },
