@@ -51,10 +51,11 @@ const PIEZAS = {
     ],
   },
   comunicaciones: {
-    preparar: `app.ACTIONS["login-demo"]();`,
+    preparar: `app.ACTIONS["login-demo"](); for (const m of app.DB.wa.mensajes) if (m.dir === "in") m.leido = null; app.COM.tel = null;`,
     pantallas: [
-      ["comunicaciones", `app.nav("/dashboard/comunicaciones")`],
-      ["comunicaciones · hilo Julián", `app.ACTIONS["wa-abrir"]("573156629034"); app.nav("/dashboard/comunicaciones")`],
+      ["bandeja (sin hilo abierto)", `app.nav("/dashboard/comunicaciones")`],
+      ["hilo de Julián + propuesta", `app.ACTIONS["wa-abrir"]("573156629034"); app.nav("/dashboard/comunicaciones")`],
+      ["hilo tras aprobar ac-1", `app.ACTIONS["accion-aprobar"]("ac-1"); app.nav("/dashboard/comunicaciones")`],
       ["correo", `app.nav("/dashboard/comunicaciones/correo")`],
       ["conexiones", `app.nav("/dashboard/conexiones")`],
     ],
