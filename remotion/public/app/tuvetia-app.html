@@ -5040,7 +5040,9 @@
           valorCosto: conStock.reduce((s, i) => s + (i.costo || 0) * (i.unidades || 0), 0),
           bajoMinimo: conStock.filter(i => i.unidades > 0 && i.unidades < i.min).length,
           agotados: conStock.filter(i => !i.unidades).length,
-          porVencer: 2
+          /* Derivado de la fecha de vencimiento del ítem (ningún ítem del seed la trae → 0). Antes era
+             un 2 escrito a mano: un número en pantalla que no salía de ningún dato. */
+          porVencer: conStock.filter(i => i.vence && aFecha(i.vence) < dias(30)).length
         };
       },
       alergiasDe: id => DB.alergias.filter(a => a.patientId === id),

@@ -109,8 +109,9 @@ const BloqueBanda: React.FC<{ texto: TextoBanda; geo: Geometria }> = ({ texto, g
 };
 
 /** Línea roja 2: `DEMO · DATOS DE EJEMPLO` durante todos los actos. Va a la derecha, en la fila
- *  del rótulo de la banda (no arriba a la derecha: ahí tapaba la burbuja de la pregunta). */
-const MicrorrotuloCapa: React.FC<{ micro: Microrrotulo; geo: Geometria }> = ({ micro, geo }) => {
+ *  del rótulo de la banda (no arriba a la derecha: ahí tapaba la burbuja de la pregunta), salvo que
+ *  la pieza le dé otra altura (`microTop`) porque su rótulo más largo se lo come. */
+const MicrorrotuloCapa: React.FC<{ micro: Microrrotulo; geo: Geometria; top: number }> = ({ micro, geo, top }) => {
   const frame = useCurrentFrame();
   const o = interpolate(frame, [micro.f1 - 8, micro.f1], [1, 0], CLAMP);
   if (frame < micro.f0 || o <= 0) return null;
@@ -119,7 +120,7 @@ const MicrorrotuloCapa: React.FC<{ micro: Microrrotulo; geo: Geometria }> = ({ m
       style={{
         position: "absolute",
         right: geo.lienzo.safeX,
-        top: geo.top + 34,
+        top,
         padding: "6px 14px",
         borderRadius: RADIUS.xxl,
         background: conAlfa(TV.surface, 0.9),
@@ -144,7 +145,9 @@ export const Banda: React.FC<{
   lienzo: Lienzo;
   top?: number;
   alto?: number;
-}> = ({ textos, microrrotulo, lienzo, top = 1330, alto = 280 }) => {
+  /** Borde superior del microrrótulo; por defecto, la fila del rótulo de la banda. */
+  microTop?: number;
+}> = ({ textos, microrrotulo, lienzo, top = 1330, alto = 280, microTop }) => {
   const geo: Geometria = { top, alto, lienzo };
   return (
     <>
@@ -154,7 +157,7 @@ export const Banda: React.FC<{
           <BloqueBanda texto={t} geo={geo} />
         </Sequence>
       ))}
-      <MicrorrotuloCapa micro={microrrotulo} geo={geo} />
+      <MicrorrotuloCapa micro={microrrotulo} geo={geo} top={microTop ?? top + 34} />
     </>
   );
 };

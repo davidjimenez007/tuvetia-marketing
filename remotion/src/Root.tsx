@@ -6,6 +6,8 @@ import { DURACION, FPS } from "./demo/guion";
 import { ExplainerRAG } from "./explainer/ExplainerRAG";
 import { DURACION as DURACION_RAG, FPS as FPS_RAG, LIENZO } from "./explainer/guion";
 import { fuentesListas } from "./marca/fuentes";
+import { DemoVentas } from "./ventas/DemoVentas";
+import { DURACION as DURACION_VENTAS, FPS as FPS_VENTAS, LIENZO as LIENZO_VENTAS } from "./ventas/guion";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -19,6 +21,18 @@ export const RemotionRoot: React.FC = () => {
           fps={FPS}
           width={1920}
           height={1080}
+        />
+        <Composition
+          id="DemoVentas"
+          component={DemoVentas}
+          durationInFrames={DURACION_VENTAS}
+          fps={FPS_VENTAS}
+          width={LIENZO_VENTAS.w}
+          height={LIENZO_VENTAS.h}
+          calculateMetadata={async () => {
+            await fuentesListas();
+            return {};
+          }}
         />
       </Folder>
       <Folder name="Explainers">

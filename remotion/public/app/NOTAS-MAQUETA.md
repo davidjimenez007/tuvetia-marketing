@@ -185,7 +185,8 @@ desplaza. El mp4 ya entregado no cambia. `ExplainerRAG` no pasa por ninguna vist
 - **«Sugerir»** en la bandeja de WhatsApp gira para siempre (su continuación vive en `SIM.after`).
 - **Correo** sin bandeja de enviados: `enviar-informe` por correo sólo cierra y avisa.
 - **Notas crédito** que no devuelven stock.
-- **`porVencer` fijo en 2** en `SEL.inventario()`.
+- ~~**`porVencer` fijo en 2** en `SEL.inventario()`~~ — resuelto el 8-sep para el video `DemoVentas`: ahora
+  se deriva de `i.vence` (ningún ítem del seed la trae → 0). Un número en pantalla tiene que salir de un dato.
 - **Plantillas de recordatorio** (Agenda y cobranza) son textareas decorativas sin `data-act`.
 - **`nuevo-movimiento`, `nueva-compra`, `exportar`, `imprimir`…** siguen siendo toasts honestos.
 - **Voseo** en los mensajes al titular que la maqueta ya traía (cartera, hueco, plantillas). El aviso de

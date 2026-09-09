@@ -109,19 +109,25 @@ async function recorrido(cdp, ancho, alto) {
   await foto("B1-paso1-archivo");
   const catAntes = await cdp.eval(`app.DB.catalogo.length`), movAntes = await cdp.eval(`app.DB.movimientos.length`);
   const imp1 = await cdp.eval(`(i => ({ paso: i.paso, mapeo: i.mapeo, filas: i.filas.length, nombre: i.archivo.nombre, enc: i.encabezados }))(app.importarDesdeTexto(${JSON.stringify(CSV1)}, "catalogo-prueba-encabezados-raros.csv", 271))`);
-  ok(`${T} B · CSV con «;» y encabezados raros → paso 2, 7 filas, mapeo propuesto Producto→nombre, Valor→precio, Cantidad→unidades`,
-    imp1.paso === 2 && imp1.filas === 7 && imp1.mapeo[0] === "nombre" && imp1.mapeo[1] === "precio" && imp1.mapeo[2] === "unidades", JSON.stringify(imp1));
-  ok(`${T} B · paso 2 pinta un <select> por columna`, (await cdp.eval(`document.querySelectorAll('select[data-act="imp-mapeo"]').length`)) === 3);
+  ok(`${T} B · CSV con «;» y encabezados raros → paso 2, 8 filas, mapeo propuesto Producto→nombre, Valor→precio, Cantidad→unidades y «Punto de pedido» sin mapear`,
+    imp1.paso === 2 && imp1.filas === 8 && imp1.mapeo[0] === "nombre" && imp1.mapeo[1] === "precio" && imp1.mapeo[2] === "unidades" && imp1.mapeo[3] === "", JSON.stringify(imp1));
+  ok(`${T} B · paso 2 pinta un <select> por columna`, (await cdp.eval(`document.querySelectorAll('select[data-act="imp-mapeo"]').length`)) === 4);
   await foto("B2-paso2-mapeo");
+  /* Lo que hace el vet en el acto 3 del video: la cuarta columna pasa a Mínimo. */
+  await cdp.eval(`(() => { const s = document.querySelector('select[data-act="imp-mapeo"][data-arg="3"]'); s.value = "min"; s.dispatchEvent(new Event("change", { bubbles: true })); })()`);
+  ok(`${T} B · corregir un <select> a mano escribe en IMP.mapeo`, (await cdp.eval(`app.IMP.mapeo[3]`)) === "min");
   await cdp.eval(`app.IMP.paso = 3; app.render()`);
+  ok(`${T} B · el paso 3 marca el Oclacitinib como «Actualiza» entre las seis primeras filas`, (await cdp.eval(`[...document.querySelectorAll("#app table.tabla tbody tr")].some(tr => tr.innerText.includes("Oclacitinib") && tr.innerText.includes("Actualiza"))`)));
   await foto("B3-paso3-revisar");
   const r1 = await cdp.eval(`app.confirmarImportacion()`);
-  const creado = await cdp.eval(`(i => i ? { precio: i.precio, unidades: i.unidades, tipo: i.tipo, stock: i.stock } : null)(app.DB.catalogo.find(i => i.nombre === "Meloxicam 1,5 mg/mL"))`);
+  const creado = await cdp.eval(`(i => i ? { precio: i.precio, unidades: i.unidades, min: i.min, tipo: i.tipo, stock: i.stock } : null)(app.DB.catalogo.find(i => i.nombre === "Meloxicam 1,5 mg/mL"))`);
   const conComa = await cdp.eval(`!!app.DB.catalogo.find(i => i.nombre === "Alimento gastrointestinal, lata 400 g")`);
-  const conTilde = await cdp.eval(`!!app.DB.catalogo.find(i => i.nombre === "Solución salina 500 mL")`);
-  ok(`${T} B · confirma: 7 creados, 0 actualizados, precio «62.000» → $62.000, comillas y tildes bien`,
-    r1 && r1.creados === 7 && r1.actualizados === 0 && creado && creado.precio === 6200000 && creado.unidades === 12 && conComa && conTilde, JSON.stringify({ r1, creado, conComa, conTilde }));
-  ok(`${T} B · cada existencia importada dejó una CARGA_INICIAL`, (await cdp.eval(`app.DB.movimientos.filter(m => m.tipo === "CARGA_INICIAL").length`)) === 7 && (await cdp.eval(`app.DB.catalogo.length`)) === catAntes + 7);
+  const conTilde = await cdp.eval(`!!app.DB.catalogo.find(i => i.nombre === "Algodón hidrófilo 500 g")`);
+  const ocla = await cdp.eval(`(i => ({ n: app.DB.catalogo.filter(x => x.nombre.indexOf("Oclacitinib") === 0).length, unidades: i.unidades, precio: i.precio }))(app.DB.catalogo.find(x => x.sku === "MED-102"))`);
+  ok(`${T} B · confirma: 7 creados, 1 actualizado (Oclacitinib, sin duplicar y sin AJUSTE: mismas 4 unidades), precio «62.000» → $62.000, mínimo mapeado a mano, comillas y tildes bien`,
+    r1 && r1.creados === 7 && r1.actualizados === 1 && creado && creado.precio === 6200000 && creado.unidades === 12 && creado.min === 3 && conComa && conTilde
+    && ocla.n === 1 && ocla.unidades === 4 && ocla.precio === 26800000, JSON.stringify({ r1, creado, conComa, conTilde, ocla }));
+  ok(`${T} B · cada existencia importada dejó una CARGA_INICIAL (7 nuevos; el repetido sin cambio no deja AJUSTE)`, (await cdp.eval(`app.DB.movimientos.filter(m => m.tipo === "CARGA_INICIAL").length`)) === 7 && (await cdp.eval(`app.DB.movimientos.filter(m => m.tipo === "AJUSTE" && /Importación/.test(m.nota)).length`)) === 0 && (await cdp.eval(`app.DB.catalogo.length`)) === catAntes + 7);
   ok(`${T} B · vuelve al inventario`, (await cdp.eval(`app.UI.ruta`)) === "/dashboard/facturacion/inventario");
   await foto("B4-inventario", { toasts: true });
   await cdp.eval(`app.nav("/dashboard/facturacion/inventario/movimientos")`);
@@ -234,7 +240,18 @@ async function recorrido(cdp, ancho, alto) {
   ok(`${T} smoke · ${smoke.n} rutas de la clínica sin artefactos`, smoke.malas.length === 0, smoke.malas.join(" · "));
 }
 
+/* ── El fixture incrustado en el video (src/ventas/guion.ts · TEXTO_CSV) es el archivo, byte a byte ── */
+function comprobarFixtureDelVideo() {
+  const ruta = resolve(raiz, "src/ventas/guion.ts");
+  if (!existsSync(ruta)) return;
+  const fuente = readFileSync(ruta, "utf8");
+  const m = /TEXTO_CSV = `([\s\S]*?)`;/.exec(fuente);
+  ok("DemoVentas · TEXTO_CSV de src/ventas/guion.ts es idéntico a _pruebas/catalogo-prueba-encabezados-raros.csv", !!m && m[1] === CSV1,
+    m ? `${m[1].length} vs ${CSV1.length} caracteres` : "sin TEXTO_CSV");
+}
+
 /* ── Arranque ───────────────────────────────────────────────────────────────────────────────── */
+comprobarFixtureDelVideo();
 if (!existsSync(CHROME)) { console.error("No está el chrome-headless-shell de Remotion:", CHROME); process.exit(2); }
 mkdirSync(SALIDA, { recursive: true });
 const perfil = resolve(SALIDA, ".perfil-chrome");
