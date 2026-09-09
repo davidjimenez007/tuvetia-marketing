@@ -84,17 +84,23 @@ export const MAPA_TUTEO: ReadonlyArray<readonly [RegExp, string]> = [
   [/avisanos/g, "avísanos"],
 ];
 
-function tutear(texto: string): string {
+type Mapa = ReadonlyArray<readonly [RegExp, string]>;
+
+/** El mapa compartido y, si la pieza trae los suyos, sus reemplazos propios después. */
+function tutear(texto: string, extra?: Mapa): string {
   let out = texto;
-  for (const [re, con] of MAPA_TUTEO) {
-    re.lastIndex = 0;
-    out = out.replace(re, con);
+  for (const mapa of extra ? [MAPA_TUTEO, extra] : [MAPA_TUTEO]) {
+    for (const [re, con] of mapa) {
+      re.lastIndex = 0;
+      out = out.replace(re, con);
+    }
   }
   return out;
 }
 
-/** Recorre los nodos de texto visibles (y placeholders) del documento y aplica el mapa. */
-export function aplicarTuteo(doc: Document): void {
+/** Recorre los nodos de texto visibles (y placeholders) del documento y aplica el mapa; `extra`
+ *  son los reemplazos propios de una pieza (voseo que sólo aparece en sus pantallas). */
+export function aplicarTuteo(doc: Document, extra?: Mapa): void {
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
     acceptNode(nodo) {
       const padre = nodo.parentElement;
@@ -108,17 +114,17 @@ export function aplicarTuteo(doc: Document): void {
   while (walker.nextNode()) nodos.push(walker.currentNode as Text);
   for (const nodo of nodos) {
     const antes = nodo.nodeValue ?? "";
-    const despues = tutear(antes);
+    const despues = tutear(antes, extra);
     if (despues !== antes) nodo.nodeValue = despues;
   }
   for (const el of Array.from(doc.querySelectorAll<HTMLElement>("[placeholder]"))) {
     const antes = el.getAttribute("placeholder") ?? "";
-    const despues = tutear(antes);
+    const despues = tutear(antes, extra);
     if (despues !== antes) el.setAttribute("placeholder", despues);
   }
   for (const area of Array.from(doc.querySelectorAll("textarea"))) {
     const antes = area.value;
-    const despues = tutear(antes);
+    const despues = tutear(antes, extra);
     if (despues !== antes) area.value = despues;
   }
 }
