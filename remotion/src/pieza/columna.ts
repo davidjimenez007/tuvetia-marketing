@@ -108,3 +108,22 @@ export function animarToasts(doc: Document, frame: number, toasts: readonly Toas
     el.style.transform = `translateY(${((1 - p) * 10).toFixed(2)}px)`;
   });
 }
+
+/**
+ * Oculta la barra de autonomía de VetGPT (tarjeta `.autonomia` de Integraciones) y la línea «número · nivel
+ * de autonomía» de la cabecera de la bandeja de WhatsApp. El nivel se guarda pero ninguna lógica de la
+ * app lo lee (public/app/NOTAS-MAQUETA.md, deuda): filmarlo sugeriría un envío automático que no existe.
+ * Los encargos de DemoAgentico y DemoComunicaciones lo prohíben explícitamente.
+ */
+export function ocultarAutonomia(doc: Document): void {
+  const ID = "pieza-sin-autonomia";
+  if (!doc.getElementById(ID)) {
+    const estilo = doc.createElement("style");
+    estilo.id = ID;
+    estilo.textContent = ".autonomia{display:none!important}";
+    doc.head.appendChild(estilo);
+  }
+  for (const el of Array.from(doc.querySelectorAll<HTMLElement>("span.xs.mut"))) {
+    if ((el.textContent ?? "").includes("nivel de autonomía")) el.style.visibility = "hidden";
+  }
+}
