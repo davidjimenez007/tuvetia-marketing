@@ -1,5 +1,5 @@
 /**
- * DemoVentas · la composición (prompts/remotion/prompts/demo-ventas.md sobre la plantilla): reel
+ * DemoVentas · la composición (prompts/demo-ventas.md sobre la plantilla): reel
  * 1080×1920 · 30 fps · 1500 frames, sólo escritorio. Capas de atrás hacia adelante (plantilla §3):
  * nieve con grano → ventana de escritorio (plano general con cromo en el acto 1; corte a la columna
  * de lectura del acto 2 en adelante) → banda de texto + microrrótulo → cierre → sonido → voz opcional.

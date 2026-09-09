@@ -1,5 +1,5 @@
 /**
- * DemoVentas · el guion como datos (prompts/remotion/prompts/demo-ventas.md §2–§7 sobre la
+ * DemoVentas · el guion como datos (prompts/demo-ventas.md §2–§7 sobre la
  * plantilla): frames de los actos, textos literales, encuadres, y las tablas de cámara, cursor,
  * hover, scroll y toasts. Cero DOM acá: todo lo que resuelve selectores vive en Cursor/Camara.
  *
@@ -107,9 +107,9 @@ export const anchoPaginaEn = (f: number): number => {
 
 /* ── Textos en pantalla (encargo §4), literales ───────────────────────────────────────────── */
 export const TEXTOS: TextoBanda[] = [
-  /* El encargo decía «Está en una hoja de cálculo» (10 palabras): el hook en pantalla admite 8
-     (skill guionista). «Planilla» es la palabra de la propia app («Desde una planilla en CSV»). */
-  { f0: ACTOS.catalogo, f1: ACTOS.mapeo, rotulo: "EL CATÁLOGO", frase: "Tu catálogo ya existe. Está en una planilla." },
+  /* Hook fijado por David (noche del 8-sep): «planilla» en Colombia es la de seguridad social, no una
+     hoja de cálculo. Son 9 palabras en pantalla (la skill guionista pide 8): decisión suya, anotada. */
+  { f0: ACTOS.catalogo, f1: ACTOS.mapeo, rotulo: "EL CATÁLOGO", frase: "¿Tienes el control en un Excel? Pásalo a Tuvetia." },
   { f0: ACTOS.mapeo, f1: ACTOS.confirmar, rotulo: "EL MAPEO", frase: "Tus encabezados no son los nuestros. Lo resuelve él." },
   { f0: ACTOS.confirmar, f1: ACTOS.existencias, rotulo: "TÚ CONFIRMAS", frase: "Propone el mapeo; tú lo apruebas antes de que entre nada." },
   { f0: ACTOS.existencias, f1: ACTOS.consulta, rotulo: "EXISTENCIAS", frase: "Y desde ahí el inventario ya sabe qué tienes y qué te falta." },
@@ -204,86 +204,52 @@ export const PT = {
 
 /* ── Blancos ─────────────────────────────────────────────────────────────────────────────── */
 const ZONA: Blanco = { sel: SEL.zonaSoltar, x: PT.zonaSoltar.x, y: PT.zonaSoltar.y };
-const FILA_MAPEO_2: Blanco = { sel: SEL.filaMapeo(2), x: 0.468, y: 0.49 };
-/** La fila de la columna suelta (la última del CSV), para la cámara. */
-const FILA_ULTIMA: Blanco = { sel: ".pagina.angosta table.tabla tbody tr:last-child", x: 0.468, y: PT.selectMin.y };
 const REVISAR: Blanco = { sel: SEL.revisar, x: PT.revisar.x, y: PT.revisar.y };
 const IMPORTAR: Blanco = { sel: SEL.importar, x: PT.importar.x, y: PT.importar.y };
-const TOAST: Blanco = { sel: SEL.toast, x: PT.toast.x, y: PT.toast.y };
 const FILA_ANTIRRABICA: Blanco = { sel: SEL.fila, texto: "antirrábica", x: 0.5, y: 0.6 };
-const PLAN: Blanco = { sel: SEL.bloquePlan, texto: "Plan", x: 0.42, y: 0.45 };
 const INFORME: Blanco = { sel: SEL.informe, x: PT.informe.x, y: PT.informe.y };
 const FACTURAR: Blanco = { sel: SEL.facturar, x: PT.facturar.x, y: PT.facturar.y };
-const LINEA_ITEM: Blanco = { sel: SEL.lineaCarrito, texto: ITEM_PROTAGONISTA, x: 0.42, y: 0.5 };
 const TOTALES: Blanco = { sel: SEL.totales, x: PT.totales.x, y: PT.totales.y };
 const EMITIR: Blanco = { sel: SEL.emitir, x: PT.emitir.x, y: PT.emitir.y };
 const FILA_ITEM: Blanco = { sel: SEL.fila, texto: ITEM_PROTAGONISTA, x: 0.42, y: 0.5 };
-/* Para la cámara, el foco va en la primera celda de la fila (el nombre): con el foco en el centro de
-   la fila el zoom 1.4 dejaba el nombre fuera de cuadro (still f1180 de la primera pasada). Como el
-   encuadre acota el pan, el cuadro arranca en el borde izquierdo de la columna y muestra nombre,
-   tipo, existencias y mínimo. */
-const CELDA_ITEM: Blanco = { sel: `${SEL.fila} td:first-child`, texto: ITEM_PROTAGONISTA, x: 0.28, y: 0.5 };
-/* En Movimientos el foco va al centro de la fila: así el cuadro suelta la columna «Cuándo» (la
-   menos importante) y muestra ítem, tipo, cantidad y la nota con el número de factura. */
-const CELDA_MOV_2: Blanco = { sel: `${SEL.fila}:nth-child(2)`, x: 0.5, y: 0.32 };
-/** Acto 4: foco algo a la izquierda del centro para que el push 1.06 no recorte los nombres. */
-const IZQUIERDA = { x: 0.4, y: 0.5 };
 
-/* ── Cámara (plantilla §4): keyframes {f, s, foco}, spring damping 200 ───────────────────────
-   Una tabla por encuadre; los keyframes terminan exactamente en el frame del corte que hace
-   desaparecer su blanco, y la vuelta a 1.0 al cambiar de acto es un corte. */
-export const CAMARA_GENERAL: KeyframeCamara[] = [
-  { f: 0, s: 1, foco: PT.centro },
-  { f: ACTOS.mapeo, s: 1.04, foco: PT.centro },
+/* ── Cámara: SIN MOVIMIENTO en esta pieza (David, noche del 8-sep) ──────────────────────────
+   Ni push, ni zoom, ni reset animado. Cada acto lleva una escala FIJA: un keyframe al entrar y otro
+   idéntico al salir, así `tramoCamara` no interpola nada; el cambio de acto es un corte. La escala
+   fija de cada acto es la que alcanzaba el push de la versión anterior, para que nada se mueva y
+   todo siga legible. Los focos son puntos fijos (sin selector) para que ni el DOM mueva el cuadro.
+   Cuerpo resultante: importación y tablas 15 px × 1.256 × 1.05 ≈ 19,7 px; consulta y carrito
+   15 × 1.588 × 1.1 ≈ 26 px; fila del ítem 15 × 1.256 × 1.4 ≈ 26 px; Movimientos × 1.3 ≈ 24,5 px.
+   El único texto que queda chico es el toast de importación (13 px × 1.256 × 1.05 ≈ 17 px): antes lo
+   subía un zoom 1.2 que ya no existe; queda anotado en NOTAS.md. */
+const fijo = (f0: number, f1: number, s: number, foco: Blanco): KeyframeCamara[] => [
+  { f: f0, s, foco },
+  { f: f1, s, foco },
 ];
 
-/* La tabla de mapeo mide 776 px de los 860 del encuadre y la card empieza en x 264: a 1.3 (lo que
-   pedía el encargo) se recortaban las dos columnas (still f0330 de la primera pasada); a 1.1 la tabla
-   cabía justa pero se comía la «I» de «Importar catálogo» (f0200 y f0330 de la segunda). A 1.05 el
-   recorte es de 21 px por lado (x 265→1083): la card y el título quedan enteros y el cuerpo sube de
-   18,8 a 19,7 px. Es un push lento, como el de los actos 1 y 4. Lo mismo para la fila que se corrige. */
-export const CAMARA_COLUMNA_A: KeyframeCamara[] = [
-  { f: ACTOS.mapeo, s: 1, foco: PT.centro },
-  { f: 180, s: 1, foco: FILA_MAPEO_2 },
-  { f: 240, s: 1.05, foco: FILA_MAPEO_2 },
-  { f: 390, s: 1.05, foco: FILA_MAPEO_2 },
-  { f: ACTOS.confirmar, s: 1, foco: PT.centro },
-  { f: 430, s: 1, foco: FILA_ULTIMA },
-  { f: CLIC.select, s: 1.05, foco: FILA_ULTIMA },
-  { f: 490, s: 1.05, foco: FILA_ULTIMA },
-  { f: CLIC.revisar, s: 1, foco: PT.centro },
-  { f: CORTE.importa - 1, s: 1, foco: PT.centro },
-  { f: CORTE.importa, s: 1, foco: TOAST },
-  { f: CORTE.importa + 20, s: 1.2, foco: TOAST },
-  { f: 630, s: 1.2, foco: TOAST },
-  { f: TOASTS.importado.f1, s: 1, foco: IZQUIERDA },
-  { f: ACTOS.consulta, s: 1.06, foco: IZQUIERDA },
-];
+/** Foco de la columna de 820 que deja la card entera a 1.05 (borde izquierdo en x 264). */
+const COLUMNA_820 = { x: 0.454, y: 0.5 };
+/** Centro de la columna de 640. */
+const COLUMNA_640 = { x: 0.406, y: 0.5 };
+/** La celda del nombre del ítem, ya centrada por el scroll (medida). */
+const CELDA_ITEM_FIJA = { x: 0.264, y: 0.526 };
+/** Segunda fila de Movimientos (medida). */
+const FILA_MOV_FIJA = { x: 0.468, y: 0.342 };
 
-/* La consulta (plan + botón) y el carrito viven en la columna de 640: el push se queda en 1.15 y
-   1.1 para no recortar las líneas (a 1.25 se perdía el inicio de cada concepto, still f0900 de la
-   primera pasada). */
-export const CAMARA_LECTURA: KeyframeCamara[] = [
-  { f: ACTOS.consulta, s: 1, foco: PT.centro },
-  { f: 840, s: 1, foco: PLAN },
-  { f: 870, s: 1.15, foco: PLAN },
-  { f: CORTE.carrito - 1, s: 1.15, foco: PLAN },
-  { f: CORTE.carrito, s: 1, foco: PT.centro },
-  { f: 945, s: 1.1, foco: LINEA_ITEM },
-  { f: 960, s: 1.1, foco: LINEA_ITEM },
-  { f: 970, s: 1, foco: PT.centro },
-  { f: CORTE.emite - 1, s: 1, foco: PT.centro },
-  { f: CORTE.emite, s: 1, foco: TOAST },
-  { f: CORTE.emite + 20, s: 1.2, foco: TOAST },
-  { f: ACTOS.bajo - 1, s: 1.2, foco: TOAST },
-];
+export const CAMARA_GENERAL: KeyframeCamara[] = fijo(0, ACTOS.mapeo - 1, 1.04, PT.centro);
+
+/* Actos 2, 3 y 4 comparten escala y foco: entre ellos no hay ni un salto. */
+export const CAMARA_COLUMNA_A: KeyframeCamara[] = fijo(ACTOS.mapeo, ACTOS.consulta - 1, 1.05, COLUMNA_820);
+
+/* Actos 5 y 6 a 1.05, un solo tramo: a 1.1 el cuadro (618 px de los 680) recortaba el inicio de las
+   líneas del carrito y a 1.2 sobre el rincón del toast (lo que alcanzaba el push del acto 6) cortaba
+   la columna entera al empezar el acto (stills f0960 de la cuarta y quinta pasada). A 1.05 caben la
+   card completa, el botón «Emitir» y el toast de la factura (13 px × 1.588 × 1.05 ≈ 22 px). */
+export const CAMARA_LECTURA: KeyframeCamara[] = fijo(ACTOS.consulta, ACTOS.bajo - 1, 1.05, COLUMNA_640);
 
 export const CAMARA_COLUMNA_B: KeyframeCamara[] = [
-  { f: ACTOS.bajo, s: 1, foco: CELDA_ITEM },
-  { f: 1120, s: 1.4, foco: CELDA_ITEM },
-  { f: ACTOS.rastro - 1, s: 1.4, foco: CELDA_ITEM },
-  { f: ACTOS.rastro, s: 1, foco: CELDA_MOV_2 },
-  { f: 1300, s: 1.3, foco: CELDA_MOV_2 },
+  ...fijo(ACTOS.bajo, ACTOS.rastro - 1, 1.4, CELDA_ITEM_FIJA),
+  ...fijo(ACTOS.rastro, ACTOS.cierre, 1.3, FILA_MOV_FIJA),
 ];
 
 export const camaraEn = (f: number): readonly KeyframeCamara[] => {

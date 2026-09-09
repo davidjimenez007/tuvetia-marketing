@@ -1,6 +1,6 @@
 # ExplainerRAG · notas de producción
 
-Encargo: `prompts/explainer-rag.md` **+ orden de cambio v2** (`prompts/remotion/prompts/explainer-rag-v2.md`,
+Encargo: `prompts/explainer-rag.md` **+ orden de cambio v2** (`prompts/explainer-rag-v2.md`,
 que se lee junto con el encargo y manda sobre él en lo que toca). Composición `ExplainerRAG`
 (1080×1920 · 30 fps · **1560 frames**), registrada en `src/Root.tsx` dentro de `<Folder name="Explainers">`.
 Voz: `marca` (sin locución).

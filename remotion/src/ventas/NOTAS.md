@@ -1,6 +1,6 @@
 # DemoVentas · notas de producción
 
-Encargo: `prompts/remotion/prompts/demo-ventas.md`, leído sobre `prompts/remotion/prompts/_plantilla-demo-producto.md`
+Encargo: `prompts/demo-ventas.md`, leído sobre `prompts/_plantilla-demo-producto.md`
 y bajo los límites de `public/app/NOTAS-MAQUETA.md`. Composición `DemoVentas` (1080×1920 · 30 fps ·
 **1500 frames**), registrada en `src/Root.tsx` dentro de `<Folder name="Demos">`. Sólo escritorio. Voz:
 Luciano, carril producto, sin locución grabada (`CON_VOZ = false`).
@@ -16,7 +16,7 @@ npx remotion ffmpeg -y -i out/demo-ventas-2x.mp4 -vf "scale=1080:1920:flags=lanc
 
 ---
 
-## Estado al 8-sep-2026, 21:50 (pieza en QA, sin render)
+## Estado al 8-sep-2026, 23:15 (entregada; re-render con cámara fija)
 
 **Hecho.** Plan aprobado por David con tres condiciones (plan SOAP legible en cámara, dock oculto si estorba,
 refactor en commit propio). `src/pieza/` generalizado y commiteado aparte (`121c35d`). `src/ventas/`
@@ -58,7 +58,17 @@ Los 13 stills del §4 pasan.
 **Entrega (22:18):** `out/render-ventas.sh` → `out/demo-ventas-2x.mp4` (2160×3840, yuvj420p, 47,0 MB;
 render 2× de 1500 frames en ~10 min), `out/demo-ventas.mp4` (1080×1920, 15,3 MB) y `out/demo-ventas-web.mp4`
 (1080×1920, yuv420p tv bt709 + faststart, 13,3 MB), los tres de 50,05 s con AAC. `out/` está en `.gitignore`.
-No queda nada pendiente de esta entrega; lo que sigue está en §6.
+
+**Corrección de la noche (David, 22:35 → re-render):** hook «¿Tienes el control en un Excel? Pásalo a
+Tuvetia.» (desviación 14); **sin movimiento de cámara**, escala fija por acto (desviación 15); toasts
+dentro de lo visible (`src/pieza/columna.ts`); `prompts/demo-ventas.md` reescrito as-built. Pasadas 4, 5 y 6
+de stills (13 frames + f0600 y f0960 repetidos tras cada ajuste); determinismo f0470 → `3fcf7197…` y
+f0600 → `b2a3ab89…` en dos procesos cada uno.
+
+**Re-render (23:06 → 23:15):** `out/render-ventas.sh` → `out/demo-ventas-2x.mp4` (2160×3840, 21,8 MB; con la
+cámara fija el h264 pesa menos de la mitad que la versión con pushes), `out/demo-ventas.mp4` (1080×1920, 8,1 MB)
+y `out/demo-ventas-web.mp4` (1080×1920, yuv420p tv bt709 + faststart, 6,8 MB), los tres de 50,05 s con AAC.
+**Ésta es la versión entregada**; la de las 22:18 quedó sobrescrita.
 
 ---
 
@@ -105,6 +115,8 @@ Los parches demo de la copia (reloj, semilla, `SIM`, `nav`, CSS de captura) no s
 | 10 | §4 acto 8: frase = «la frase literal del subtítulo de la app» con rótulo `CADA MOVIMIENTO DEJA RASTRO` | La banda lleva la **segunda mitad** literal: «Las existencias son su saldo, no un número que alguien escribe.» | El subtítulo completo empieza con las mismas cuatro palabras del rótulo; repetirlas en rótulo y frase se leía como un error. Sigue siendo la frase del producto. |
 | 11 | §4 acto 3: el toast sobre la pantalla de importar; §5 beat 600: «ruta inventario» | Al confirmar, la app navega sola a Existencias (f555): el toast se ve sobre Existencias y el acto 4 arranca ya ahí | Es lo que hace `confirmarImportacion()`. Quedarse en importar mostraría el paso 1 vacío (el estado se reinicia al importar). |
 | 12 | Plantilla §1: «reutiliza; no bifurques» | `src/pieza/` (commit `121c35d`, propio y revertible): `AppSuperficie`, `Ventana`, `Banda`, `postproceso`, `Toque`, `texto`, `Sonido` parametrizados; el explainer queda como envoltorios | Los módulos del explainer importaban su `./guion` a la fuerza. Regresión `ExplainerRAG` f0180/f0760/f1260: MD5 idénticos (en el mensaje del commit). |
+| 14 | §4 acto 1 (encargo original): «Tu catálogo ya existe. Está en una hoja de cálculo.» | **«¿Tienes el control en un Excel? Pásalo a Tuvetia.»**, fijado por David la noche del 8-sep | La primera corrección («planilla») significa otra cosa en Colombia (seguridad social). 9 palabras en pantalla (la skill pide 8): decisión de David. «Excel» es el formato de origen que la propia app nombra, no un competidor. `prompts/demo-ventas.md` ya lo trae así. |
+| 15 | Plantilla §4: push lento, push de tecleo, zoom a la acción | **Sin movimiento de cámara en esta pieza** (David, noche del 8-sep): cada acto lleva una escala fija con un keyframe al entrar y otro idéntico al salir (`fijo()` en `guion.ts`). El cambio de acto es un corte. Escalas: acto 1 ×1.04; actos 2–4 ×1.05 (un solo tramo, sin saltos); actos 5–6 ×1.05 (un solo tramo); acto 7 ×1.4; acto 8 ×1.3. Focos en puntos fijos, sin selector. | Pedido explícito, sólo para esta pieza. David pedía usar la escala que alcanzaba el push; se respetó en los actos 1, 2–4, 7 y 8. En los actos 5 y 6 el push llegaba a ×1.1 y ×1.2, pero a ×1.1 el cuadro recortaba el inicio de las líneas del carrito y a ×1.2 (sobre el rincón del toast) cortaba la columna entera al arrancar el acto (stills f0960 de la 4.ª y 5.ª pasada): quedaron a ×1.05, que deja la card de 640 entera y el cuerpo en 25 px. Lo único chico es el **toast de importación** (acto 3–4): 13 px × 1.256 × 1.05 ≈ **17 px**; se lee, pero es lo más chico de la pieza; anotado, sin zoom. El de la factura queda en 22 px. Los toasts se colocan **dentro de lo que la cámara deja ver** (`visibleDe` en `src/pieza/columna.ts`): pegados al encuadre salían cortados con la escala fija (f0600 de la 4.ª pasada). El scroll de la página (acto 4 a la antirrábica, acto 6 a «Emitir») se mantiene: es el vet desplazando la app, no la cámara. |
 | 13 | §4 acto 8: «la primera fila es nueva: Venta · −1 · Factura FV-…» | La primera fila es la **Solución ótica** (Venta −1, misma factura); el Oclacitinib es la segunda. La cámara encuadra las dos | `descontarStock` recorre las líneas del carrito en orden y hace `unshift`: la última línea queda primera. La frase del acto no nombra al ítem; las dos filas llevan el número del toast. |
 
 ---
@@ -116,7 +128,7 @@ los ocho actos, en tuteo, sin afirmar nada que no esté en pantalla:
 
 | Acto | Frames | Locución |
 |---|---|---|
-| 1 | 0–120 | Tu catálogo ya existe: está en una planilla de tu caja. |
+| 1 | 0–120 | ¿Tienes el control en un Excel? Pásalo a Tuvetia. |
 | 2 | 120–420 | Lo arrastras y Tuvetia propone a qué campo va cada columna. Producto es nombre; Valor es precio; Cantidad, existencias. |
 | 3 | 420–600 | Una no la reconoció. La corriges tú, revisas y apruebas. Hasta ahí no ha entrado nada. |
 | 4 | 600–780 | Y desde ese momento el inventario sabe qué tienes y qué te falta: la antirrábica está en cero. |
@@ -181,12 +193,13 @@ locución del §3.
 | 9 | El sufrimiento del vet no es el gancho | **PASA.** El gancho es «tu catálogo ya existe», no las horas perdidas. |
 | 10 | CTA siempre a WhatsApp | **PASA.** Cierre con la pastilla «Escríbenos al WhatsApp» (variante aprobada). |
 
-**Hook (skill `guionista`):** tipo provocación/confesión, sin «Hola» ni contexto. **Reventaba por longitud**:
-la frase del encargo «Tu catálogo ya existe. Está en una hoja de cálculo.» tiene 10 palabras en pantalla
-(máximo 8) y la locución propuesta tenía 17 habladas (máximo 12). Arreglo mínimo, aplicado: banda **«Tu
-catálogo ya existe. Está en una planilla.»** (8; «planilla» es la palabra de la propia app) y locución
-«Tu catálogo ya existe: está en una planilla de tu caja.» (10). Si David prefiere «hoja de cálculo», es
-una línea en `guion.ts` y el hook queda en 10 palabras a sabiendas.
+**Hook (skill `guionista`):** la frase del encargo («Tu catálogo ya existe. Está en una hoja de cálculo.»,
+10 palabras) reventaba por longitud (máximo 8 en pantalla) y la primera corrección («…Está en una
+planilla.») usaba una palabra que en Colombia significa otra cosa (la planilla de seguridad social).
+**David fijó el hook la noche del 8-sep: «¿Tienes el control en un Excel? Pásalo a Tuvetia.»** (48
+caracteres, 9 palabras: una más que la regla, decisión suya y anotada; «Excel» aparece como el formato
+de origen que la propia app nombra, no como competidor; la pregunta es directa, no una retórica blanda).
+La locución del acto 1 dice lo mismo (9 habladas, máximo 12).
 
 **Observación sin veredicto:** «Lo resuelve él» (acto 2) deja el sujeto implícito; si se quiere nombrar,
 «Lo resuelve VetGPT» respeta la grafía y la app ya lo dice así en pantalla. No se cambió: es la frase

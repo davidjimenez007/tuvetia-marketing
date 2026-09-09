@@ -1,6 +1,6 @@
 # Maqueta · notas de los tres cambios previos a los videos de producto
 
-Encargo: `remotion/prompts/remotion/maqueta-cambios-para-videos.md`, ejecutado el 8-sep-2026 sobre
+Encargo: `remotion/prompts/maqueta-cambios-para-videos.md`, ejecutado el 8-sep-2026 sobre
 `public/app/tuvetia-app.html` en la rama `explainer-rag`. Los parches demo (reloj congelado, `mulberry32`,
 `SIM` no-op, `nav` síncrono, CSS de captura) no se tocaron.
 
