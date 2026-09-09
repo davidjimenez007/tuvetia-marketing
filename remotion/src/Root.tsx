@@ -6,6 +6,8 @@ import { DURACION, FPS } from "./demo/guion";
 import { ExplainerRAG } from "./explainer/ExplainerRAG";
 import { DURACION as DURACION_RAG, FPS as FPS_RAG, LIENZO } from "./explainer/guion";
 import { fuentesListas } from "./marca/fuentes";
+import { DemoPacientes } from "./pacientes/DemoPacientes";
+import { DURACION as DURACION_PAC, FPS as FPS_PAC, LIENZO as LIENZO_PAC } from "./pacientes/guion";
 import { DemoVentas } from "./ventas/DemoVentas";
 import { DURACION as DURACION_VENTAS, FPS as FPS_VENTAS, LIENZO as LIENZO_VENTAS } from "./ventas/guion";
 
@@ -29,6 +31,18 @@ export const RemotionRoot: React.FC = () => {
           fps={FPS_VENTAS}
           width={LIENZO_VENTAS.w}
           height={LIENZO_VENTAS.h}
+          calculateMetadata={async () => {
+            await fuentesListas();
+            return {};
+          }}
+        />
+        <Composition
+          id="DemoPacientes"
+          component={DemoPacientes}
+          durationInFrames={DURACION_PAC}
+          fps={FPS_PAC}
+          width={LIENZO_PAC.w}
+          height={LIENZO_PAC.h}
           calculateMetadata={async () => {
             await fuentesListas();
             return {};
