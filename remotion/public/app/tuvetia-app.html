@@ -995,6 +995,11 @@
       border-radius: var(--radius-lg);
     }
 
+    /* La zona de arrastre de Importar catálogo reutiliza el estado vacío; `.sobre` es el archivo encima. */
+    label.vacio { cursor: pointer; }
+    label.vacio:hover { border-color: var(--border-strong); }
+    .vacio.sobre { border-color: var(--accent); background: var(--accent-soft); }
+
     .vacio .ico {
       display: grid;
       place-items: center;
@@ -5159,6 +5164,12 @@
     const COM = { tel: null, borrador: "", sugiriendo: false, accionPendiente: null, correoId: null, segmento: "todos" };
     /* Filtros de las listas que los tienen. */
     const FL = { pacientesQ: "", pacientesEspecie: "", consultasQ: "", consultasNota: "", consultasOrden: "desc", titularesQ: "", ventasQ: "", ventasEstado: "", ventasTipo: "", ventasTodo: true, ventasPag: 1, ventasPorPag: 10, invQ: "", invCat: "", invTipo: "" };
+    /* Importar catálogo: dónde está parado el vet (1 archivo → 2 columnas → 3 revisar) y lo que
+       se leyó del archivo. Vive fuera de DB porque no es un dato de la clínica. */
+    const IMP = {
+      paso: 1, archivo: null, encabezados: [], filas: [], mapeo: {}, fixture: false, error: null,
+      reset() { this.paso = 1; this.archivo = null; this.encabezados = []; this.filas = []; this.mapeo = {}; this.fixture = false; this.error = null; }
+    };
 
     /* ═══════════════════════════════════════════════════════════════════════════════════════════
        [J07] ROUTER
@@ -6485,6 +6496,9 @@
       const meds = DB.medicaciones.filter(m => m.patientId === id);
       const vac = DB.vacunas.filter(v => v.patientId === id).sort((a, b) => aFecha(b.aplicada) - aFecha(a.aplicada));
       const consultas = SEL.consultasDe(id), citas = SEL.citasDe(id);
+      /* El informe al titular sale de la consulta más reciente con nota aprobada: es el mismo
+         diálogo y el mismo envío de la consulta (abrirInforme), no un segundo informe. */
+      const conInforme = consultas.find(c => SEL.notaDe(c.id)?.estado === "approved") || null;
       const adj = DB.adjuntos.filter(a => a.patientId === id);
       const plan = DB.planesDePaciente.find(x => x.patientId === id);
       const meta = [p.especie, p.raza, SEXO[p.sexo], edadLarga(p.nace), p.peso ? `${p.peso} kg` : null, p.color].filter(Boolean).join(" · ");
@@ -6516,6 +6530,9 @@
       <div class="filaw">
         <button class="btn borde chico" data-act="nueva-consulta-de" data-arg="${p.id}">${icon("fantasma")} Iniciar consulta</button>
         <button class="btn borde chico" data-act="chat-paciente" data-arg="${p.id}">${icon("bot")} Preguntarle a VetGPT</button>
+        ${conInforme
+          ? html`<button class="btn borde chico" data-act="informe-paciente" data-arg="${conInforme.id}">${icon("documento")} Informe para el titular</button>`
+          : html`<button class="btn borde chico" data-act="informe-paciente" disabled title="Todavía no hay una nota aprobada para compartir">${icon("documento")} Informe para el titular</button>`}
       </div>
     </div>
 
@@ -8056,10 +8073,14 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       send_email: "Correo", reply_email: "Respuesta por correo", registrar_alergia: "Registrar alergia"
     };
     const ENVIA = new Set(["send_whatsapp_message", "send_email", "reply_email"]);
+    /* [clave, rótulo, multilínea, extra]: `extra` es un placeholder (texto) o un mapa de opciones
+       (objeto), que pinta un <select>. */
     const CAMPOS_EDITABLES = {
       send_whatsapp_message: [["body", "Texto del mensaje", true]],
       send_email: [["to_email", "Para", false], ["subject", "Asunto", false], ["body", "Mensaje", true]],
-      create_appointment: [["titulo", "Motivo", false], ["cuando", "Fecha y hora", false]]
+      create_appointment: [["titulo", "Motivo", false], ["cuando", "Fecha y hora", false]],
+      /* El alérgeno lo escribe el vet antes de aprobar: es una decisión clínica y no puede ir en blanco. */
+      registrar_alergia: [["alergeno", "Alérgeno", false, "Por ejemplo: Penicilina"], ["severidad", "Severidad", false, SEVERIDAD]]
     };
     function TarjetaAccion(a) {
       const campos = CAMPOS_EDITABLES[a.herramienta] || [];
@@ -8074,11 +8095,13 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       <p>${a.resumen}</p>
       ${detalle.length ? html`<dl>${detalle.map(([k, v]) => html`<dt>${ROTULO_CAMPO[k] || k}</dt><dd>${String(v)}</dd>`)}</dl>` : ""}
       ${a.estado === "proposed" && campos.length ? html`
-        <div class="col" style="gap:8px">${campos.map(([k, rot, multi]) => html`
+        <div class="col" style="gap:8px">${campos.map(([k, rot, multi, extra]) => html`
           <label class="col" style="gap:4px"><span class="xs semi mut">${rot}</span>
-            ${multi
+            ${extra && typeof extra === "object"
+          ? html`<select class="campo" data-act="accion-campo" data-arg="${a.id}:${k}">${Object.entries(extra).map(([v, t]) => html`<option value="${v}" ${a.payload[k] === v ? "selected" : ""}>${mayus1(t)}</option>`)}</select>`
+          : multi
           ? html`<textarea class="campo" rows="4" data-act="accion-campo" data-arg="${a.id}:${k}">${a.payload[k] ?? ""}</textarea>`
-          : html`<input class="campo" value="${a.payload[k] ?? ""}" data-act="accion-campo" data-arg="${a.id}:${k}">`}
+          : html`<input class="campo" value="${a.payload[k] ?? ""}" placeholder="${typeof extra === "string" ? extra : ""}" data-act="accion-campo" data-arg="${a.id}:${k}">`}
           </label>`)}</div>` : ""}
       ${a.estado !== "proposed" ? html`
         <p class="xs semi mut">${a.estado === "executed" ? "✓ Ejecutada" : a.estado === "rejected" ? "✗ Rechazada" : "⚠ Falló — revisá e intentá de nuevo"}</p>
@@ -8112,7 +8135,8 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
     <span class="rotulo">Propuestas pendientes</span>
     ${pend.map(a => TarjetaAccion({
         id: a.id, herramienta: a.herramienta, resumen: a.resumen, payload: a.payload, estado: "proposed",
-        pasos: ["Enviar el mensaje al titular por WhatsApp", "Dejarlo registrado en la conversación"]
+        pasos: ["Enviar el mensaje al titular por WhatsApp", "Dejarlo registrado en la conversación"],
+        pasosHechos: a.pasosHechos, destino: a.destino
       }))}
   </div>`;
     }
@@ -8146,14 +8170,28 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
             id: uid("ac"), herramienta: "create_appointment", estado: "proposed",
             resumen: `Agendar un control de ${pac?.nombre ?? "el paciente"} para el ${DIAS[cuando.getDay()].toLowerCase()} ${cuando.getDate()} de ${MESES[cuando.getMonth()]} a las ${hora(cuando)}.`,
             payload: { paciente: pac?.nombre ?? "—", titular: nomO(pac?.ownerId), titulo: "Control", cuando: `${iso(cuando)} ${hora(cuando)}`, duracion: "20 minutos", vet: nomU(UI.sesion?.userId) },
-            pasos: ["Crear la cita en la agenda", "Invitar al titular y a los administradores al calendario", "Avisarle al titular por WhatsApp"],
+            /* Sólo se promete lo que ocurre: la cita, y el aviso si el switch de «Confirmación al
+               agendar» está prendido y el titular tiene teléfono. No hay invitación de calendario. */
+            pasos: DB.clinica.confirmacionCitas && getO(pac?.ownerId)?.tel ? ["Crear la cita en la agenda", "Avisarle al titular por WhatsApp"] : ["Crear la cita en la agenda"],
             ejecutar() {
+              /* La cita se crea con lo que el vet dejó en la tarjeta: motivo y fecha son editables. */
+              const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(this.payload.cuando || ""));
+              const inicio = m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0, 0) : cuando;
+              const titulo = String(this.payload.titulo || "").trim() || "Control";
               const nueva = {
                 id: uid("ap"), pacienteId: pac?.id ?? null, ownerId: pac?.ownerId ?? null, vetId: UI.sesion?.userId || DB.usuarios[0].id,
-                titulo: "Control", tipo: "control", estado: "scheduled", inicio: cuando, fin: new Date(cuando.getTime() + 20 * 60000), notas: ""
+                titulo, tipo: "control", estado: "scheduled", inicio, fin: new Date(inicio.getTime() + 20 * 60000), notas: ""
               };
               DB.citas.push(nueva);
-              return { pasosHechos: ["Cita creada en la agenda", "Invitación enviada al titular", "Aviso por WhatsApp enviado"], destino: { href: "/dashboard/calendario", texto: "Ver en la agenda" } };
+              const hechos = ["Cita creada en la agenda"];
+              const o = getO(pac?.ownerId), tel = (o?.tel || "").replace(/\D/g, "");
+              if (DB.clinica.confirmacionCitas && tel) {
+                const texto = `Hola ${o.nombre.split(" ")[0]}, te confirmamos la cita de ${pac?.nombre ?? "tu mascota"}: ${diaLargo(inicio).toLowerCase()} a las ${hora(inicio)} en ${DB.clinica.nombre}. Estamos en ${DB.clinica.direccion || "la clínica"}. Si no puedes venir, avísanos y la movemos.`;
+                DB.wa.mensajes.push({ id: uid("w"), tel, dir: "out", texto, cuando: new Date(), leido: null, entregado: new Date(), fallo: null });
+                if (!DB.wa.contactos.some(c => c.tel === tel)) DB.wa.contactos.push({ tel, nombre: o.nombre, ownerId: o.id });
+                hechos.push("Aviso por WhatsApp enviado al titular");
+              }
+              return { pasosHechos: hechos, destino: { href: "/dashboard/calendario", texto: "Ver en la agenda" } };
             }
           }
         };
@@ -8193,7 +8231,16 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
               body: `Hola, te escribimos de ${DB.clinica.nombre}. A ${(cand[0] || DB.pacientes[0]).nombre} le toca el refuerzo y nos quedó un espacio hoy. ¿Te sirve? Confirmanos y lo dejamos reservado.`
             },
             pasos: ["Enviar el mensaje por WhatsApp"],
-            ejecutar() { return { pasosHechos: ["Mensaje enviado por WhatsApp"], destino: { href: "/dashboard/comunicaciones", texto: "Ver la conversación" } }; }
+            ejecutar() {
+              /* Mismo envío que la rama de cartera: el mensaje entra de verdad a la conversación. */
+              const pac = cand[0] || DB.pacientes[0];
+              const o = getO(pac.ownerId);
+              const tel = (o?.tel || "").replace(/\D/g, "");
+              if (!tel) return { error: `${nomO(pac.ownerId)} no tiene teléfono cargado: agrégalo en la ficha del titular antes de enviar.` };
+              DB.wa.mensajes.push({ id: uid("w"), tel, dir: "out", texto: this.payload.body, cuando: new Date(), leido: null, entregado: new Date(), fallo: null });
+              if (!DB.wa.contactos.some(c => c.tel === tel)) DB.wa.contactos.push({ tel, nombre: o.nombre, ownerId: o.id });
+              return { pasosHechos: ["Mensaje enviado por WhatsApp"], destino: { href: "/dashboard/comunicaciones", texto: "Ver la conversación" } };
+            }
           }
         };
       }
@@ -8245,9 +8292,19 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
           accion: {
             id: uid("ac"), herramienta: "registrar_alergia", estado: "proposed",
             resumen: `Registrar una alergia nueva en la ficha de ${p.nombre}.`,
-            payload: { paciente: p.nombre, alergeno: "—", severidad: "moderada" },
-            pasos: ["Agregar la alergia a la ficha del paciente", "Activar la guarda en las notas futuras"],
-            ejecutar() { return { pasosHechos: ["Alergia registrada en la ficha"], destino: { href: `/dashboard/patients/${p.id}`, texto: "Ver la ficha" } }; }
+            payload: { paciente: p.nombre, alergeno: "", severidad: "moderate" },
+            pasos: ["Agregar la alergia a la ficha del paciente", "Si es severa, activar la guarda en las notas futuras"],
+            ejecutar() {
+              /* Decisión clínica: sin alérgeno no se registra nada, y se dice por qué. */
+              const alergeno = String(this.payload.alergeno || "").trim();
+              if (!alergeno || alergeno === "—") return { error: "Escribe cuál es el alérgeno antes de aprobar: es una decisión clínica y no puede ir en blanco." };
+              const severidad = SEVERIDAD[this.payload.severidad] ? this.payload.severidad : "moderate";
+              DB.alergias.push({ id: uid("a"), patientId: p.id, alergeno, severidad, reaccion: "Registrada desde VetGPT; reacción por detallar" });
+              return {
+                pasosHechos: ["Alergia registrada en la ficha", severidad === "severe" ? "Guarda activada: la ficha alerta y las notas nuevas la revisan" : "Visible en la ficha para las notas futuras"],
+                destino: { href: `/dashboard/patients/${p.id}`, texto: "Ver la ficha" }
+              };
+            }
           }
         };
       }
@@ -8962,28 +9019,264 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
   </div>`;
     }
 
+    /* ── Importar catálogo ──────────────────────────────────────────────────────────────────────
+       El archivo se lee de verdad. CSV parseado acá mismo (la maqueta corre sin internet y sin
+       librerías), mapeo de columnas propuesto por sinónimos y corregible, previsualización con las
+       filas reales, y una importación que deduplica y deja rastro en los movimientos.
+       Límites, con todas las letras: XLSX no se parsea (se muestra un fixture con aviso) y foto/OCR
+       no existen. Ver NOTAS-MAQUETA.md. */
+    const CAMPOS_IMPORT = [["nombre", "Nombre"], ["tipo", "Tipo"], ["precio", "Precio"], ["unidades", "Existencias"], ["min", "Mínimo"], ["sku", "SKU"]];
+    const SINONIMOS_IMPORT = {
+      nombre: ["nombre", "producto", "descripcion", "item", "articulo", "detalle", "concepto"],
+      tipo: ["tipo", "categoria", "clase", "rubro", "familia", "grupo"],
+      precio: ["precio", "valor", "pvp", "precioventa", "valorventa", "venta", "preciounitario", "valorunitario"],
+      unidades: ["unidades", "cantidad", "existencias", "stock", "saldo", "inventario", "disponible", "cant"],
+      min: ["min", "minimo", "stockminimo", "reorden", "puntodereorden", "cantidadminima"],
+      sku: ["sku", "codigo", "cod", "referencia", "ref", "codigodebarras", "codbarras", "ean", "plu"]
+    };
+    /* Lo que se ve cuando llega un .xlsx: columnas típicas de una exportación de caja, con datos de
+       ejemplo. No es el archivo del vet y la pantalla lo dice. */
+    const FIXTURE_XLSX = {
+      encabezados: ["Código", "Descripción", "Categoría", "Precio venta", "Existencias", "Mínimo"],
+      filas: [
+        ["MED-201", "Meloxicam 1,5 mg/mL", "Medicamento", "62.000", "12", "3"],
+        ["MED-202", "Gabapentina 100 mg x 30", "Medicamento", "88.000", "8", "3"],
+        ["PRD-301", "Collar isabelino M", "Producto", "24.000", "15", "3"],
+        ["PRD-302", "Shampoo clorhexidina 250 mL", "Producto", "46.000", "10", "3"],
+        ["INS-401", "Guantes de examen (caja)", "Insumo", "32.000", "20", "5"],
+        ["SRV-501", "Ecografía abdominal", "Servicio", "180.000", "", ""]
+      ]
+    };
+    /* Minúsculas, sin tildes, sin espacios ni signos: «Precio venta» y «precio_venta» son lo mismo. */
+    const normalizarTexto = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    function parsearCSV(texto) {
+      const t = String(texto || "").replace(/^﻿/, "");
+      /* Delimitador: el que más aparezca en la primera línea fuera de comillas. El CSV que exporta
+         Excel en Colombia viene con «;», porque la coma es el separador decimal. */
+      const primera = t.split(/\r?\n/)[0] || "";
+      let delim = ",", max = -1;
+      for (const d of [";", ",", "\t", "|"]) {
+        let n = 0, dentro = false;
+        for (const ch of primera) { if (ch === '"') dentro = !dentro; else if (ch === d && !dentro) n++; }
+        if (n > max) { max = n; delim = d; }
+      }
+      const filas = []; let fila = [], campo = "", dentro = false;
+      const cerrarFila = () => { fila.push(campo); campo = ""; if (fila.some(c => c.trim() !== "")) filas.push(fila); fila = []; };
+      for (let i = 0; i < t.length; i++) {
+        const ch = t[i];
+        if (dentro) {
+          if (ch === '"') { if (t[i + 1] === '"') { campo += '"'; i++; } else dentro = false; }
+          else campo += ch;
+        } else if (ch === '"') dentro = true;
+        else if (ch === delim) { fila.push(campo); campo = ""; }
+        else if (ch === "\n" || ch === "\r") { if (ch === "\r" && t[i + 1] === "\n") i++; cerrarFila(); }
+        else campo += ch;
+      }
+      if (campo !== "" || fila.length) cerrarFila();
+      const encabezados = (filas.shift() || []).map(h => h.trim());
+      return { delimitador: delim, encabezados, filas: filas.map(f => encabezados.map((_, i) => (f[i] ?? "").trim())) };
+    }
+
+    /* Propone a qué campo va cada columna. Cada campo se asigna una sola vez: gana la primera columna. */
+    function proponerMapeo(encabezados) {
+      const mapeo = {}, usados = new Set();
+      encabezados.forEach((h, i) => {
+        const n = normalizarTexto(h);
+        const campo = n ? CAMPOS_IMPORT.map(c => c[0]).find(c => !usados.has(c)
+          && (n === c || SINONIMOS_IMPORT[c].some(s => n === s || (n.length > 3 && s.length > 3 && (n.startsWith(s) || s.startsWith(n)))))) : null;
+        mapeo[i] = campo || "";
+        if (campo) usados.add(campo);
+      });
+      return mapeo;
+    }
+    /* «62.000», «$ 62.000», «62.000,50», «62000.5» → centavos. Punto de miles o decimal según la forma. */
+    function parsearPesos(v) {
+      let s = String(v ?? "").trim().replace(/[^\d.,-]/g, "");
+      if (!s) return 0;
+      const neg = s.startsWith("-"); s = s.replace(/-/g, "");
+      if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+      else if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, "");
+      else if (/^\d+,\d+$/.test(s)) s = s.replace(",", ".");
+      const n = Number(s);
+      return Number.isFinite(n) ? Math.round(n * 100) * (neg ? -1 : 1) : 0;
+    }
+    const parsearEntero = v => { const n = Number(String(v ?? "").replace(/[^\d-]/g, "")); return Number.isFinite(n) ? n : 0; };
+    /* El tipo del catálogo a partir de la columna de tipo, y si no viene, de lo obvio en el nombre. */
+    function normalizarTipo(v, nombre) {
+      const n = normalizarTexto(v);
+      if (n) {
+        if (/medic|farmac|droga|vacuna|antibiot/.test(n)) return "MEDICAMENTO";
+        if (/servi|consulta|procedim|cirug|examen|laborat|ecograf|radiograf|peluquer|bano/.test(n)) return "SERVICIO";
+        if (/insumo|material|desechable/.test(n)) return "INSUMO";
+        return "PRODUCTO";
+      }
+      const m = normalizarTexto(nombre);
+      if (/\d+mg|mgml|comprim|tablet|capsul|jarabe|vacuna|gotas|solucion/.test(m)) return "MEDICAMENTO";
+      if (/guante|jeringa|gasa|venda|algodon/.test(m)) return "INSUMO";
+      if (/ecograf|radiograf|consulta|cirug|limpiezadental|peluquer/.test(m)) return "SERVICIO";
+      return "PRODUCTO";
+    }
+    const filasImportadas = () => IMP.fixture ? FIXTURE_XLSX.filas : IMP.filas;
+    /* Convierte una fila del archivo, según el mapeo, a lo que necesita el catálogo. */
+    function filaAItem(fila) {
+      const v = {};
+      for (const [i, campo] of Object.entries(IMP.mapeo)) if (campo) v[campo] = fila[Number(i)] ?? "";
+      const nombre = String(v.nombre || "").trim();
+      if (!nombre) return null;
+      const tiene = k => v[k] != null && String(v[k]).trim() !== "";
+      return {
+        nombre, tipo: normalizarTipo(v.tipo, nombre), sku: String(v.sku || "").trim().toUpperCase() || null,
+        precio: parsearPesos(v.precio), unidades: tiene("unidades") ? parsearEntero(v.unidades) : null, min: tiene("min") ? parsearEntero(v.min) : null
+      };
+    }
+    /* Dedupe: por SKU si viene; si no, por nombre normalizado. */
+    const itemExistente = f => (f.sku && DB.catalogo.find(i => (i.sku || "").toUpperCase() === f.sku))
+      || DB.catalogo.find(i => normalizarTexto(i.nombre) === normalizarTexto(f.nombre)) || null;
+    const planImportacion = () => filasImportadas().map(filaAItem).filter(Boolean).map(f => ({ ...f, existente: itemExistente(f) }));
+
+    /* Entrada SÍNCRONA: deja el flujo en el paso 2 con el texto ya parseado. Es lo que usa el replay
+       de Remotion (que reconstruye cada frame desde cero y no puede esperar un FileReader) y lo que
+       llama cargarArchivoImportado cuando termina de leer el archivo. */
+    function importarDesdeTexto(texto, nombreArchivo, tam) {
+      const nombre = String(nombreArchivo || "catalogo.csv");
+      const ext = (nombre.split(".").pop() || "").toLowerCase();
+      IMP.reset();
+      IMP.archivo = { nombre, tam: tam ?? String(texto || "").length, ext };
+      if (ext === "xlsx" || ext === "xls") {
+        IMP.fixture = true; IMP.encabezados = FIXTURE_XLSX.encabezados.slice();
+      } else {
+        const r = parsearCSV(texto);
+        IMP.encabezados = r.encabezados; IMP.filas = r.filas;
+        if (!r.encabezados.length || !r.filas.length) IMP.error = "El archivo está vacío o no tiene una fila de encabezados y al menos una de datos.";
+      }
+      IMP.mapeo = proponerMapeo(IMP.encabezados);
+      IMP.paso = IMP.error ? 1 : 2;
+      nav("/dashboard/facturacion/inventario/importar");
+      return IMP;
+    }
+    function cargarArchivoImportado(archivo) {
+      if (!archivo) return;
+      const ext = (archivo.name.split(".").pop() || "").toLowerCase();
+      if (ext === "xlsx" || ext === "xls") { importarDesdeTexto("", archivo.name, archivo.size); return; }
+      const lector = new FileReader();
+      lector.onload = () => {
+        const bytes = new Uint8Array(lector.result);
+        let texto;
+        try { texto = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+        catch { texto = new TextDecoder("windows-1252").decode(bytes); }   // el CSV «ANSI» que guarda Excel en Windows
+        importarDesdeTexto(texto, archivo.name, archivo.size);
+      };
+      lector.onerror = () => toast("No se pudo leer el archivo", { tono: "mal" });
+      lector.readAsArrayBuffer(archivo);
+    }
+    function confirmarImportacion() {
+      if (IMP.fixture) { toast("La maqueta no importa desde Excel. Guarda el archivo como CSV.", { tono: "mal" }); return null; }
+      const porDefecto = DB.categorias.find(c => c.pordefecto)?.id || "cat-1";
+      const catPara = (tipo, nombre) => tipo === "MEDICAMENTO" ? "cat-2" : tipo === "INSUMO" ? "cat-4"
+        : /aliment|croquet|lata|dieta|snack/.test(normalizarTexto(nombre)) ? "cat-3" : porDefecto;
+      const nota = `Importación ${IMP.archivo?.nombre || "CSV"}`;
+      let creados = 0, actualizados = 0, movimientos = 0;
+      for (const f of IMP.filas.map(filaAItem).filter(Boolean)) {
+        const ya = itemExistente(f);
+        if (ya) {
+          /* Existente: precio y existencias se actualizan; el cambio de existencias deja un AJUSTE con
+             el delta (una CARGA_INICIAL sobre algo que ya tenía saldo duplicaría el rastro). */
+          const antes = ya.unidades || 0;
+          if (f.precio) ya.precio = f.precio;
+          if (f.min != null) ya.min = f.min;
+          if (f.sku && !ya.sku) ya.sku = f.sku;
+          if (ya.stock && f.unidades != null && f.unidades !== antes) {
+            ya.unidades = f.unidades;
+            DB.movimientos.unshift({ id: uid("mv"), itemId: ya.id, tipo: "AJUSTE", cant: f.unidades - antes, cuando: new Date(), nota: `${nota}: de ${antes} a ${f.unidades}` });
+            movimientos++;
+          }
+          actualizados++;
+        } else {
+          const stock = f.tipo !== "SERVICIO";
+          const it = {
+            id: uid("it"), tipo: f.tipo, nombre: f.nombre, sku: f.sku, precio: f.precio, iva: 19, ivaEstado: "GRAVADO",
+            stock, unidades: stock ? (f.unidades || 0) : 0, min: stock ? (f.min ?? 0) : 0, costo: null, cat: catPara(f.tipo, f.nombre), activo: true,
+            duracion: stock ? null : 30
+          };
+          DB.catalogo.push(it);
+          if (stock && it.unidades > 0) {
+            DB.movimientos.unshift({ id: uid("mv"), itemId: it.id, tipo: "CARGA_INICIAL", cant: it.unidades, cuando: new Date(), nota });
+            movimientos++;
+          }
+          creados++;
+        }
+      }
+      IMP.reset();
+      toast(`Importados: ${creados} ${creados === 1 ? "creado" : "creados"}, ${actualizados} ${actualizados === 1 ? "actualizado" : "actualizados"}`, {
+        detalle: movimientos ? `${movimientos} movimiento(s) de existencias registrados.` : "Sin cambios de existencias.",
+        accion: { texto: "Ver", act: "ir", arg: "/dashboard/facturacion/inventario" }
+      });
+      nav("/dashboard/facturacion/inventario");
+      return { creados, actualizados, movimientos };
+    }
+
     function VistaImportarCatalogo() {
+      const tam = t => t >= 1048576 ? (t / 1048576).toFixed(1) + " MB" : t >= 1024 ? Math.round(t / 1024) + " KB" : (t || 0) + " B";
+      const filas = filasImportadas();
+      const tieneNombre = Object.values(IMP.mapeo).includes("nombre");
+      const plan = IMP.paso === 3 ? planImportacion() : [];
+      const nuevos = plan.filter(f => !f.existente).length, repetidos = plan.length - nuevos;
+      const avisoXlsx = IMP.fixture ? html`
+      <div class="aviso warn">${icon("alerta")}<div><b>La maqueta no lee Excel.</b> Lo que ves es una muestra con columnas y datos de ejemplo, no tu archivo. Guarda el archivo como CSV para importarlo de verdad.</div></div>` : "";
+      const archivo = IMP.archivo ? html`
+      <div class="fila panel" style="padding:12px"><span class="fila crece">${icon("documento", "faint")} <span class="sm mono">${IMP.archivo.nombre}</span></span>
+        <span class="xs mut">${IMP.encabezados.length} columnas · ${filas.length} filas · ${tam(IMP.archivo.tam)}</span></div>` : "";
       return html`
   <div class="pagina angosta">
     <a class="volver" data-act="ir" data-arg="/dashboard/facturacion/inventario">${icon("flechaIzq")} Existencias</a>
-    <div class="cab-pagina"><div><h1>Importar catálogo</h1><p>Desde una planilla en CSV. Si la tenés en Excel: Guardar como → CSV.</p></div></div>
+    <div class="cab-pagina"><div><h1>Importar catálogo</h1><p>Desde una planilla en CSV. Si la tienes en Excel: Guardar como → CSV.</p></div></div>
+    <div class="chips">${[[1, "Archivo"], [2, "Columnas"], [3, "Revisar"]].map(([n, t]) => html`<span class="chip ${IMP.paso === n ? "act" : ""}">${n}. ${t}</span>`)}</div>
     <div class="card pad-lg col" style="gap:16px">
-      <div class="fila panel" style="padding:12px"><span class="fila crece">${icon("documento", "faint")} <span class="sm mono">catalogo-vetcol.csv</span></span>
-        <span class="xs mut">6 filas · 12 KB</span></div>
+      ${IMP.paso === 1 ? html`
+      <label class="vacio" data-soltar="importar">
+        <span class="ico">${icon("subir")}</span>
+        <b>Arrastra tu archivo acá o haz clic para elegirlo</b>
+        <span class="sm mut">El CSV que exporta tu caja o Excel. Con cualquier encabezado: en el paso siguiente VetGPT propone qué columna es qué.</span>
+        <input type="file" accept=".csv,text/csv,.xlsx" data-act="imp-archivo" style="display:none">
+      </label>
+      ${IMP.error ? html`<div class="aviso mal">${icon("alertaCirculo")}<div>${IMP.error}</div></div>` : ""}
+      <p class="xs mut">También puedes soltar un .xlsx, pero la maqueta sólo lee CSV: con Excel verás una muestra, no tus datos.</p>`
+          : IMP.paso === 2 ? html`
+      ${archivo}${avisoXlsx}
+      <p class="sm mut">VetGPT propuso a qué campo va cada columna. Corrige lo que no cuadre y sigue.</p>
       <div class="tabla-caja"><table class="tabla">
-        <thead><tr><th>Nombre</th><th>Tipo</th><th class="n">Precio</th><th class="n">IVA</th><th class="n">Stock inicial</th></tr></thead>
-        <tbody>${[
-          ["Meloxicam 1,5 mg/mL", "MEDICAMENTO", 62000, 19, 12],
-          ["Gabapentina 100 mg x 30", "MEDICAMENTO", 88000, 19, 8],
-          ["Collar isabelino M", "PRODUCTO", 24000, 19, 15],
-          ["Shampoo clorhexidina 250 mL", "PRODUCTO", 46000, 19, 10],
-          ["Guantes de examen (caja)", "INSUMO", 32000, 19, 20],
-          ["Ecografía abdominal", "SERVICIO", 180000, 19, "—"]
-        ].map(([n, t, p, iv, s]) => html`<tr><td class="semi">${n}</td><td class="mut">${TIPO_ITEM[t]}</td>
-          <td class="n">${fmtCOP(p * 100)}</td><td class="n mut">${iv}%</td><td class="n mut">${s}</td></tr>`)}</tbody>
+        <thead><tr><th>Columna del archivo</th><th>Primer valor</th><th>Campo de Tuvetia</th></tr></thead>
+        <tbody>${IMP.encabezados.map((h, i) => html`<tr>
+          <td class="semi">${h || html`<span class="mut">(sin nombre)</span>`}</td>
+          <td class="xs mut">${filas[0]?.[i] ?? ""}</td>
+          <td><select class="campo" data-act="imp-mapeo" data-arg="${i}" style="min-width:150px">
+            <option value="" ${!IMP.mapeo[i] ? "selected" : ""}>No importar</option>
+            ${CAMPOS_IMPORT.map(([c, rot]) => html`<option value="${c}" ${IMP.mapeo[i] === c ? "selected" : ""}>${rot}</option>`)}
+          </select></td></tr>`)}</tbody>
       </table></div>
-      <div class="aviso">${icon("alertaCirculo")}<div>Los ítems con un SKU que ya existe se actualizan; los demás se crean.</div></div>
-      <div><button class="btn" data-act="importar-catalogo">${icon("subir")} Importar 6 ítems</button></div>
+      ${tieneNombre ? "" : html`<div class="aviso">${icon("alertaCirculo")}<div>Falta decir qué columna es el <b>Nombre</b>: sin eso no hay qué importar.</div></div>`}
+      <div class="filaw">
+        <button class="btn borde" data-act="imp-cancelar">Cancelar</button>
+        <button class="btn borde" data-act="imp-paso" data-arg="1">Otro archivo</button>
+        <button class="btn" data-act="imp-paso" data-arg="3" ${tieneNombre ? "" : "disabled"}>Revisar ${filas.length} ${filas.length === 1 ? "fila" : "filas"} ${icon("flechaDer")}</button>
+      </div>`
+            : html`
+      ${archivo}${avisoXlsx}
+      <div class="tabla-caja"><table class="tabla">
+        <thead><tr><th>Ítem</th><th>Tipo</th><th class="n">Precio</th><th class="n">Existencias</th><th class="n">Mínimo</th></tr></thead>
+        <tbody>${plan.slice(0, 6).map(f => html`<tr>
+          <td><div class="fila" style="gap:8px;flex-wrap:wrap"><span class="semi">${f.nombre}</span>${f.existente ? html`<span class="badge neutro">Actualiza</span>` : html`<span class="badge ok">Nuevo</span>`}</div>
+            ${f.sku ? html`<span class="mono xxs faint" style="display:block">${f.sku}</span>` : ""}</td>
+          <td class="mut">${TIPO_ITEM[f.tipo]}</td>
+          <td class="n">${fmtCOP(f.precio)}</td><td class="n mut">${f.tipo === "SERVICIO" ? "—" : (f.unidades ?? "—")}</td><td class="n mut">${f.min ?? "—"}</td></tr>`)}</tbody>
+      </table></div>
+      ${plan.length > 6 ? html`<p class="xs mut">Se muestran 6 de ${plan.length} filas.</p>` : ""}
+      <div class="aviso">${icon("alertaCirculo")}<div>Se importarán <b>${plan.length}</b> ${plan.length === 1 ? "fila" : "filas"}: <b>${nuevos}</b> se ${nuevos === 1 ? "crea" : "crean"} y <b>${repetidos}</b> ya ${repetidos === 1 ? "existe y se actualiza" : "existen y se actualizan"} (precio y existencias). Cada existencia que entra queda como movimiento.</div></div>
+      <div class="filaw">
+        <button class="btn borde" data-act="imp-paso" data-arg="2">${icon("flechaIzq")} Volver a las columnas</button>
+        <button class="btn" data-act="imp-confirmar" ${IMP.fixture ? raw('disabled title="Guarda el archivo como CSV para importarlo de verdad"') : plan.length ? "" : "disabled"}>${icon("subir")} Importar ${plan.length} ${plan.length === 1 ? "ítem" : "ítems"}</button>
+      </div>`}
     </div>
   </div>`;
     }
@@ -9236,7 +9529,8 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
               <span class="rotulo">Propuestas de VetGPT pendientes</span>
               ${propuestas.map(a => TarjetaAccion({
                       id: a.id, herramienta: a.herramienta, resumen: a.resumen, payload: a.payload, estado: a.estado,
-                      pasos: ["Enviar el mensaje al titular por WhatsApp", "Dejarlo registrado en la conversación"]
+                      pasos: ["Enviar el mensaje al titular por WhatsApp", "Dejarlo registrado en la conversación"],
+                      pasosHechos: a.pasosHechos, destino: a.destino
                     }))}
             </div>` : ""}
           <form class="fila" data-act="wa-enviar">
@@ -10032,6 +10326,8 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       "nueva-consulta": () => abrirCajonConsulta(),
       "nueva-consulta-de": a => abrirCajonConsulta(a),
       "chat-paciente": a => { CHAT.pacienteId = a; CHAT.hiloId = "p:" + a; CHAT.mensajes = []; nav("/dashboard/asistente?patient=" + a); },
+      /* Desde la ficha: el arg es la consulta más reciente con nota aprobada (la resuelve VistaPaciente). */
+      "informe-paciente": a => abrirInforme(a),
       "chat-nuevo": () => { CHAT.hiloId = "g" + Date.now(); CHAT.pacienteId = null; CHAT.mensajes = []; CHAT.entrada = ""; nav("/dashboard/asistente"); },
 
       /* ── Acceso ─────────────────────────────────────────────────────────────────────────── */
@@ -10346,8 +10642,11 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
         if (viva && typeof viva.ejecutar === "function") r = viva.ejecutar();
         else if (wa) {
           DB.wa.mensajes.push({ id: uid("w"), tel: wa.tel, dir: "out", texto: wa.payload.body, cuando: new Date(), leido: null, entregado: new Date(), fallo: null });
-          r = { pasosHechos: ["Mensaje enviado por WhatsApp", "Registrado en la conversación"], destino: null };
+          r = { pasosHechos: ["Mensaje enviado por WhatsApp", "Registrado en la conversación"], destino: { href: "/dashboard/comunicaciones", texto: "Ver la conversación" } };
         }
+        /* La acción puede negarse a ejecutar (alérgeno en blanco, titular sin teléfono): la tarjeta
+           sigue propuesta y editable, y el toast dice por qué. Mismo patrón que la guarda de la nota. */
+        if (!r || r.error) { toast(r?.error || "No se pudo ejecutar la acción.", { tono: "mal" }); return; }
         ac.estado = "executed"; ac.pasosHechos = r.pasosHechos; ac.destino = r.destino;
         toast("Acción ejecutada", { detalle: r.pasosHechos.join(" · ") });
         render();
@@ -10491,17 +10790,17 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       },
       "nueva-categoria": () => toast("Categoría creada", { detalle: "En la app real abre un formulario con nombre y color." }),
       "nuevo-movimiento": () => toast("Registrar movimiento", { detalle: "Entrada por compra, salida por aplicación, consumo interno, ajuste, pérdida o vencimiento." }),
-      "importar-catalogo": () => {
-        const nuevos = [["Meloxicam 1,5 mg/mL", "MEDICAMENTO", 62000, 12], ["Gabapentina 100 mg x 30", "MEDICAMENTO", 88000, 8],
-        ["Collar isabelino M", "PRODUCTO", 24000, 15], ["Shampoo clorhexidina 250 mL", "PRODUCTO", 46000, 10],
-        ["Guantes de examen (caja)", "INSUMO", 32000, 20], ["Ecografía abdominal", "SERVICIO", 180000, 0]];
-        for (const [nom, tipo, precio, u] of nuevos)
-          DB.catalogo.push({
-            id: uid("it"), tipo, nombre: nom, precio: precio * 100, iva: 19, ivaEstado: "GRAVADO",
-            sku: null, stock: tipo !== "SERVICIO", unidades: u, min: 3, costo: precio * 60, cat: "cat-1", activo: true, duracion: tipo === "SERVICIO" ? 30 : null
-          });
-        toast("6 ítems importados"); nav("/dashboard/facturacion/inventario");
+      /* Importar catálogo: el archivo se lee de verdad (ver el bloque «Importar catálogo»). */
+      "imp-archivo": (a, e, el) => { const archivo = el.files && el.files[0]; if (archivo) cargarArchivoImportado(archivo); },
+      "imp-mapeo": (a, e, el) => {
+        const idx = Number(a), campo = val(el);
+        /* Un campo va a una sola columna: si estaba en otra, esa otra queda en «No importar». */
+        if (campo) for (const k of Object.keys(IMP.mapeo)) if (Number(k) !== idx && IMP.mapeo[k] === campo) IMP.mapeo[k] = "";
+        IMP.mapeo[idx] = campo; render();
       },
+      "imp-paso": a => { IMP.paso = Number(a); render(); },
+      "imp-cancelar": () => { IMP.reset(); nav("/dashboard/facturacion/inventario"); },
+      "imp-confirmar": () => confirmarImportacion(),
       "nueva-compra": () => toast("Nueva compra", { detalle: "Al recibirla entran las existencias y se crea el egreso." }),
       "nuevo-proveedor": () => toast("Nuevo proveedor"),
       "nuevo-ingreso": () => toast("Nuevo ingreso", { detalle: "Un ingreso que no viene de una factura: por ejemplo, una venta de mostrador ya cobrada." }),
@@ -10985,6 +11284,21 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "radio" || el.type === "date" || el.type === "time" || el.type === "datetime-local")
         correr(el.dataset.act, el.dataset.arg, ev, el);
     });
+    /* Arrastrar un archivo a la zona de importar. Viven en document, como los demás: render()
+       regenera el HTML y un listener puesto en el elemento moriría con él. */
+    document.addEventListener("dragover", ev => {
+      const zona = ev.target.closest?.("[data-soltar]");
+      if (!zona) return;
+      ev.preventDefault(); zona.classList.add("sobre");
+    });
+    document.addEventListener("dragleave", ev => { ev.target.closest?.("[data-soltar]")?.classList.remove("sobre"); });
+    document.addEventListener("drop", ev => {
+      const zona = ev.target.closest?.("[data-soltar]");
+      if (!zona) return;
+      ev.preventDefault(); zona.classList.remove("sobre");
+      const archivo = ev.dataTransfer?.files?.[0];
+      if (archivo) cargarArchivoImportado(archivo);
+    });
     /* Enter envía en el compositor; Shift+Enter hace salto de línea. Es lo que espera cualquiera
        que haya usado un chat. */
     document.addEventListener("keydown", ev => {
@@ -11056,6 +11370,9 @@ Cualquier duda escribinos por acá. — ${DB.clinica.nombre}`;
       getP, getO, getU, getItem, getC, getF, nomP, nomO, nomU, fmtCOP, totalDeFactura, saldoDeFactura,
       /* PARCHE DEMO (ExplainerRAG): el replay arma las respuestas del chat con estos dos. */
       responderVetGPT, repintarChat, REPREGUNTAS,
+      /* PARCHE DEMO (videos de producto): una tarjeta empujada desde consola se registra en
+         ACCIONES_VIVAS para poder aprobarla; la importación tiene entrada síncrona (sin FileReader). */
+      ACCIONES_VIVAS, IMP, importarDesdeTexto, cargarArchivoImportado, confirmarImportacion,
 
       /* Recorre todas las rutas y avisa si alguna se rompe. Además busca artefactos: un
          «[object Object]» o un «undefined» impreso no lanza excepción, así que sin este chequeo
